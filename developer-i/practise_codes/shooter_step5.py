@@ -1,43 +1,43 @@
-# โครงเว้น 30% — ช่องที่เราเว้นไว้ให้คุณเติมเอง / เฉลย: starter/shooter_step5.py / ใบ้: ในใบงาน session
+# โครงเว้นบางส่วน — ช่องที่คุณต้องเติมเอง / เฉลย: solution_codes/shooter_step5.py / ใบ้: สไลด์คาบ 12 (ขั้นต่อ) + ใบงาน
 # ------------------------------------------------------------------------------
-# shooter_step5.py — สร้าง Shooter #5 (คาบ 16+): ระดับความยาก + คลื่นศัตรู (wave spawn)
+# shooter_step5.py — Shooter #3 ขั้นต่อ (คาบ 12, ทีมที่เสร็จเร็ว): ระดับความยาก + ปล่อยศัตรูเป็นจังหวะ
 # ------------------------------------------------------------------------------
-# *** หมายเหตุ parity (สำคัญ — ตาม MASTER_PLAN.md §2.4) ***
-# ฝั่งอ้างอิง reference/shooter_full.py "จบที่ step4" โดยตั้งใจ. step5 (ตารางโหมด,
-# คลื่นศัตรู, ระเบิด-pool, sprites, music, scanlines) = "ของแถมฝั่ง C console".
-# ไฟล์นี้คือ Python ที่ขยับ "ตรรกะ" ให้ตรงกับ C step5 เท่าที่ Python ทำได้:
-#   - ตารางโหมด (FREE/EASY/DIFFICULT) แบบเดียวกับ C (:85-89)
-#   - spawn timer ปล่อยศัตรูเป็น "คลื่น" ตามจังหวะของโหมด (:362-368)
-# สิ่งที่ "ไม่มี" ใน Python (C-native, flagged): ระเบิด-pool, sprites pixel-art,
-#   backing music, scanline skin, เมนูเลือกโหมดบนจอ (เลือกผ่านตัวแปร MODE แทน).
+# ต่อจาก step4. สิ่งที่เพิ่ม 3 อย่าง:
+#   1) ศัตรูเป็น "ชุดหมุนเวียน" ตัวจริง แบบเดียวกับกระสุนคาบ 11 (5 ขั้นเดิม):
+#        (1) สร้างชุดครั้งเดียว: enemies + enemy_active (ธง True = ใช้อยู่, False = ว่าง)
+#        (2) หาตัวว่าง: if not enemy_active[index]     (3) ยืม: spawn_enemy()
+#        (4) อัปเดตทุกเฟรม: ในลูปศัตรู                   (5) คืน: park_enemy(index)
+#   2) spawn_timer นับถอยหลังทีละเฟรม ถึง 0 แล้วปล่อยศัตรู 1 ตัว (ทุก SPAWN_DELAY + 1 เฟรม)
+#   3) ตารางโหมด MODES (FREE / EASY / DIFFICULT) — ค่าความยากทั้งหมดอยู่ในตารางเดียว
 #
-# step นี้เราทำอะไร: เกมเดิม แต่คราวนี้ "ปรับความยากได้" โหมดต่างกันเปลี่ยนจังหวะ
-# ปล่อยศัตรู ความเร็วตก และกติกาเสียชีวิต. ศัตรูทยอยมาเป็น "คลื่น" ไม่ตกพร้อมกัน
-# หมดทีเดียว เกมเลยมีจังหวะเหมือนเกมยิงจริง. ลองเปลี่ยน MODE เป็น 0/1/2 ดูความต่างกันนะ
+# เลือกโหมดด้วยตัวแปร MODE (0/1/2). เกมเต็ม full_games/shooter_full.py เลือกผ่านเมนูบนจอ
+#   (game.menu) และมีระเบิด ภาพสไปรต์ กับโมเมนตัมกระสุนเพิ่ม — step5 ไม่มีส่วนนั้น
+# ลองเปลี่ยน MODE เป็น 0/1/2 แล้วดูความต่าง: จังหวะปล่อยศัตรู ความเร็วตก และกติกาเสียชีวิต
 #
 # ส่วนที่คุณจะเขียนเองใน step นี้ (ต่อจาก step4):
-#   1) ตารางโหมด + เลือกค่า spawn_delay / speed_mul / lives / lose_when_pass / lose_when_hit
-#   2) spawn timer: ปล่อยศัตรูทีละตัวจาก "บ่อจอด" ตามจังหวะ (ไม่ใช่ตกพร้อมกันหมด)
-#   3) ยานชนศัตรู -> เสียชีวิต (ยกเว้นโหมด FREE) + hitbox หดเท่ากับ C
-# Core 70% ที่เรียกใช้: (เดิมทั้งหมด) game.start/Box/Text/keys/hit/sfx/run
-# C step == Python step บนจอ: ความยากเปลี่ยนจังหวะ+ความเร็วศัตรู, ตรรกะเสียชีวิตเดียวกัน
-# อ้างอิงเกมจริง: page_game_shooter.c:85-89 (modes), :249-268 (spawn), :358-454 (step)
+#   1) ตารางโหมด: เพิ่มแถว EASY / DIFFICULT
+#   2) spawn_enemy(): หาตัวว่าง -> ยืม (ขั้น 2 + 3 ของชุดหมุนเวียน)
+#   3) ยานชนศัตรู -> เสียชีวิต (ยกเว้นโหมด FREE) ด้วย boxes_overlap()
+# engine ที่ใช้ (เดิมทั้งหมด): game.title / Box / Text / keys / sfx / run
+# กล่องชนหด: กระสุน 4x10, ศัตรู 26x16 (เล็กกว่ากล่องที่เห็น)
+# เกมเต็มสำหรับเทียบ: full_games/shooter_full.py (MODES :36-40, ปล่อยศัตรู :123-135, ลูปศัตรู :216-259)
+#
 # ------------------------------------------------------------------------------
 import bentogame as game
 import random
 
 ACCEL, MAX_SPEED, FRICTION = 1.4, 13.0, 0.80
-MAX_BULLETS, MAX_ENEMIES = 6, 8                 # บ่อกระสุน 6, บ่อศัตรู 8 (เท่า C :38)
+MAX_BULLETS, MAX_ENEMIES = 6, 8                 # ชุดกระสุน 6 นัด, ชุดศัตรู 8 ตัว
 ENEMY_COLORS = [game.RED, game.ORANGE, game.PINK]
 
-# hitbox "หด" ให้ตรงกับ C step5 (bp_hit ใช้ขนาดเล็กกว่ากล่องจริง): กระสุน 4x10,
-# ศัตรู 26x16 — ยานใช้ขนาดเต็ม 62x24 (page_game_shooter.c:415-416, :437)
+# กล่องชน "หด" ให้เล็กกว่ากล่องที่เห็น (ต้องเข้าเนื้อจริงถึงนับ): กระสุน 4x10,
+# ศัตรู 26x16 (เท่ากับ full_games/shooter_full.py:237) — ยานใช้ขนาดเต็ม 62x24
 BULLET_HITBOX = (4, 10)
 ENEMY_HITBOX  = (26, 16)
 
 def boxes_overlap(a_x, a_y, a_width, a_height, b_x, b_y, b_width, b_height):
-    """ชน AABB ด้วยขนาดที่กำหนดเอง (เท่ากับ bp_hit ฝั่ง C) — เพื่อ hitbox หดให้ตรง
-    a_* = กล่องแรก, b_* = กล่องที่สอง: ซ้อนกันเมื่อทุกด้านเหลื่อมกัน"""
+    """ชนแบบกล่อง (AABB) ด้วยขนาดที่กำหนดเอง — ใช้ทำกล่องชนหด
+    a_* = กล่องแรก, b_* = กล่องที่สอง: โดนเมื่อทับกันจริง (ขอบชนกันพอดีไม่นับ)"""
     return (a_x < b_x + b_width and a_x + a_width > b_x and
             a_y < b_y + b_height and a_y + a_height > b_y)
 
@@ -50,11 +50,11 @@ def boxes_overlap(a_x, a_y, a_width, a_height, b_x, b_y, b_width, b_height):
 #      lose_when_pass=False แต่ lose_when_hit=True (ชนยานเสีย แต่หลุดล่างไม่เสีย)
 #   3) เพิ่มแถว DIFFICULT: spawn ถี่ที่สุด, speed_mul สูงสุด, ชีวิตน้อยสุด,
 #      lose_when_pass=True และ lose_when_hit=True (โหดทั้งสองทาง)
-#   ค่าตัวเลขปรับเอาเองให้รู้สึก "ยากขึ้นเป็นชั้น" (ดู starter ถ้าอยากเทียบค่า)
+#   ค่าตัวเลขปรับเอาเองให้รู้สึก "ยากขึ้นเป็นชั้น" (ดู solution_codes/shooter_step5.py ถ้าอยากเทียบค่า)
 MODES = [
     ("FREE SHOOTER", 16, 0.85, 99, False, False),  # ตัวอย่างไว้ 1 แถวให้รันได้ก่อน เดี๋ยวคุณเพิ่ม EASY/DIFFICULT เอง
 ]
-MODE = 0                                        # เลือกโหมด (0/1/2) — C เลือกผ่านเมนูบนจอ
+MODE = 0                                        # เลือกโหมด (0/1/2) — เกมเต็มเลือกผ่านเมนูบนจอ
 MODE_NAME, SPAWN_DELAY, SPEED_MUL, START_LIVES, LOSE_WHEN_PASS, LOSE_WHEN_HIT = MODES[MODE]
 
 game.title("SHOOTER")                          # หน้าเริ่ม: Start=เล่น Back=ออก (ทำ start ให้ในตัว)
@@ -62,14 +62,14 @@ game.title("SHOOTER")                          # หน้าเริ่ม: St
 ship = game.Box(365, 352, 62, 24, game.GREEN)
 ship_x, ship_speed = 365.0, 0.0
 score, lives, fire_cooldown = 0, START_LIVES, 0
-spawn_timer = 8                                  # ตัวนับจังหวะปล่อยศัตรู
+spawn_timer = 8                                  # นับถอยหลังก่อนปล่อยศัตรูตัวถัดไป
 hud = game.Text("%s   Score: 0   Lives: %d" % (MODE_NAME, lives), 10, 8, game.WHITE)
 
 bullets = [game.Box(0, -50, 6, 14, game.CYAN) for _ in range(MAX_BULLETS)]
 for bullet in bullets:
     bullet.hide()
 
-# ศัตรูเริ่มจอด "ซ่อน" ทั้งหมด แล้วปล่อยทีละตัวเป็นคลื่น (enemy_active[] = ลอยอยู่ไหม)
+# (1) สร้างชุดศัตรูครั้งเดียว: ทุกตัวเริ่ม "ว่าง" ซ่อนเหนือจอ / enemy_active[i] = True แปลว่าใช้อยู่
 enemies = [game.Box(0, -50, 30, 24, ENEMY_COLORS[0]) for _ in range(MAX_ENEMIES)]
 for enemy in enemies:
     enemy.hide()
@@ -83,32 +83,32 @@ def find_free_bullet():
     return None
 
 def spawn_enemy():
-    # ----- เติมส่วนนี้เอง (งานของคุณ) (2): ปล่อยศัตรู 1 ตัวจากบ่อจอด -----
+    # ----- เติมส่วนนี้เอง (งานของคุณ) (2): ปล่อยศัตรู 1 ตัว = (2) หาตัวว่าง + (3) ยืม -----
     # ทำตามขั้น:
-    #   1) วน index ใน range(MAX_ENEMIES) หาตัวแรกที่ enemy_active[index] เป็น False
-    #   2) ตั้ง enemy_active[index] = True (จองตัวนั้นว่า "ลอยอยู่")
+    #   1) หาตัวว่าง: วน index ใน range(MAX_ENEMIES) หาตัวแรกที่ enemy_active[index] เป็น False
+    #   2) ยืม: ตั้ง enemy_active[index] = True (จองตัวนั้นว่า "ใช้อยู่")
     #   3) สุ่มสีปล่อยมัน: ใช้ .set_color(...) กับ random.choice(ENEMY_COLORS)
     #   4) วางมันไว้บนสุดนอกจอ: ใช้ .move_to(...) — x สุ่ม (random.randint) ให้อยู่ในจอ, y ติดลบ (ยังไม่โผล่)
     #   5) เรียก .show() ให้มองเห็น
     #   6) ตั้ง enemy_speed[index] = ความเร็วสุ่ม (random.uniform) คูณ SPEED_MUL ของโหมด
     #   7) return ออกทันที (ปล่อยแค่ตัวเดียวต่อการเรียก 1 ครั้ง)
-    # (ช่วงตัวเลขความเร็ว/ขอบ x ปรับเอง — ดู starter ถ้าติด)
+    # (ช่วงตัวเลขความเร็ว/ขอบ x ปรับเอง — ดู solution_codes/shooter_step5.py ถ้าติด)
     pass   # <- ลบ pass ออกเมื่อเริ่มเขียน
 
-def park_enemy(index):
+def park_enemy(index):                             # (5) คืน: กลับเป็นว่าง
     enemy_active[index] = False
     enemies[index].hide()
     enemies[index].move_to(0, -50)
 
-# ปล่อยคลื่นแรก 3 ตัว (เหมือน C shooter_start :347-349)
+# ปล่อยศัตรู 3 ตัวแรกทันที (เหมือนเกมเต็ม full_games/shooter_full.py:265-266)
 spawn_enemy(); spawn_enemy(); spawn_enemy()
 
 def on_frame():
     global ship_x, ship_speed, score, lives, fire_cooldown, spawn_timer
     keys = game.keys()
-    # (Back=ออก / Start=เริ่มใหม่ — game.run() จัดการให้)
+    # (Back = ออก / Start = พักเกม — game.run() จัดการให้ bentogame.py:970-974)
 
-    # spawn timer — ปล่อยศัตรูเป็นคลื่นตามจังหวะของโหมด (:362-368)
+    # spawn_timer: นับลงทีละเฟรม ถึง 0 แล้วปล่อย 1 ตัว แล้วตั้งใหม่ = SPAWN_DELAY
     if spawn_timer > 0:
         spawn_timer -= 1
     else:
@@ -134,7 +134,7 @@ def on_frame():
             bullet.move_to(bullet.x, bullet.y - 9)
             if bullet.y < -20: bullet.hide()
 
-    # ศัตรู + ชน + คะแนน + ชีวิต (ตรรกะเดียวกับ C :388-454)
+    # (4) อัปเดตศัตรูที่ใช้อยู่ทุกเฟรม + ชน + คะแนน + ชีวิต
     for index in range(MAX_ENEMIES):
         if not enemy_active[index]:
             continue
@@ -151,7 +151,7 @@ def on_frame():
                     return False
             continue
 
-        # กระสุน x ศัตรู (hitbox หด — เท่ากับ C :414-416)
+        # กระสุน x ศัตรู (ใช้กล่องชนหด)
         enemy_box = (enemy.x, enemy.y, ENEMY_HITBOX[0], ENEMY_HITBOX[1])
         was_hit = False
         for bullet in bullets:
@@ -170,7 +170,7 @@ def on_frame():
         # ทำตามขั้น (เทียบ enemy_box ที่เตรียมไว้ด้านบน):
         #   1) เช็คยานชนศัตรูด้วย boxes_overlap(...) — กล่องยานคือ ship_x, ตำแหน่ง y ของยาน,
         #      ขนาด ship.w/ship.h, แล้วกาง *enemy_box เป็นกล่องที่สอง
-        #   2) ถ้าชน: เรียก park_enemy(index) เก็บศัตรูกลับบ่อจอด
+        #   2) ถ้าชน: เรียก park_enemy(index) คืนศัตรูกลับชุด (กลับเป็นว่าง)
         #   3) ถ้าโหมดนี้ลงโทษ (LOSE_WHEN_HIT): ลด lives ลง 1 แล้วอัปเดต hud ด้วย hud.set(...)
         #   4) ถ้า lives หมด (<= 0): เล่น game.sfx("gameover"), โชว์ game.Text("GAME OVER", ...) แล้ว return False
         #   5) ถ้ายังไม่หมดชีวิต: เล่นเสียงระเบิด game.sfx("explode")
