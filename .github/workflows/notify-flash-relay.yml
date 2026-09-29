@@ -82,7 +82,7 @@ jobs:
           missing = dict(want)
           while time.time() < deadline and missing:
               try:
-                  with urllib.request.urlopen(f'{relay}/api/firmware?bundle=ide', timeout=20) as r:
+                  with urllib.request.urlopen(f'{relay}/api/firmware?bundle=game', timeout=20) as r:
                       served = json.load(r)
               except Exception as e:
                   print('relay unreachable:', e); time.sleep(10); continue
