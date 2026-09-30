@@ -27,9 +27,9 @@ for bullet in bullets:
     bullet.hide()
 
 # ----- เติมส่วนนี้เอง (1): ศัตรู 6 ตัว สร้างครั้งเดียว เริ่มเหนือจอ ความเร็วสุ่ม -----
-enemies = [game.Box(random.randint(0, game.WIDTH - 30), -random.randint(40, 400),
+enemies = [game.Box(random.randint(0, game.WIDTH - 30), -random.randint(60, 700),
                     30, 24, random.choice(ENEMY_COLORS)) for _ in range(MAX_ENEMIES)]
-enemy_speed = [random.uniform(2.5, 4.5) for _ in range(MAX_ENEMIES)]
+enemy_speed = [random.uniform(1.5, 2.5) for _ in range(MAX_ENEMIES)]   # ช้าพอให้ยิงทัน
 
 def find_free_bullet():
     for bullet in bullets:
@@ -39,7 +39,7 @@ def find_free_bullet():
 
 # ----- เติมส่วนนี้เอง (2): ศัตรูวนกลับขึ้นบน (x สุ่ม, y เหนือจอ, สีสุ่ม) -----
 def respawn_enemy(index):
-    enemies[index].move_to(random.randint(0, game.WIDTH - 30), -random.randint(20, 200))
+    enemies[index].move_to(random.randint(0, game.WIDTH - 30), -random.randint(100, 500))
     enemies[index].set_color(random.choice(ENEMY_COLORS))
 
 def on_frame():

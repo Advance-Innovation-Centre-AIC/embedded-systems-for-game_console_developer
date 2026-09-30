@@ -96,24 +96,24 @@
 </tbody>
 </table>
 <blockquote>
-<p>Catch ย้ายของไปที่ y = 0 (ขอบบนจอ) · step4 ย้ายไปเหนือจอ y −200 … −20 แล้วค่อย ๆ โผล่ลงมา · แบบ &quot;คืนแล้วรอให้ยืม&quot; ของศัตรูอยู่ใน step5 ท้ายคาบ</p>
+<p>Catch ย้ายของไปที่ y = 0 (ขอบบนจอ) · step4 ย้ายไปเหนือจอ y −500 … −100 แล้วค่อย ๆ โผล่ลงมา · แบบ &quot;คืนแล้วรอให้ยืม&quot; ของศัตรูอยู่ใน step5 ท้ายคาบ</p>
 </blockquote>
 </section>
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="5" data-paginate="true" data-theme="default" lang="en-US" data-marpit-pagination="5" style="--paginate:true;--theme:default;" data-marpit-pagination-total="36">
 <h1 id="%E0%B8%97%E0%B8%B2%E0%B8%A2%E0%B8%81%E0%B9%88%E0%B8%AD%E0%B8%99--%E0%B8%96%E0%B9%89%E0%B8%B2%E0%B8%A8%E0%B8%B1%E0%B8%95%E0%B8%A3%E0%B8%B9%E0%B9%84%E0%B8%A1%E0%B9%88%E0%B8%AA%E0%B8%B8%E0%B9%88%E0%B8%A1%E0%B9%80%E0%B8%A5%E0%B8%A2-%E0%B8%88%E0%B8%B0%E0%B9%80%E0%B8%81%E0%B8%B4%E0%B8%94%E0%B8%AD%E0%B8%B0%E0%B9%84%E0%B8%A3%E0%B8%82%E0%B8%B6%E0%B9%89%E0%B8%99">ทายก่อน — ถ้าศัตรูไม่สุ่มเลย จะเกิดอะไรขึ้น?</h1>
 <p><img src="img/s12_spawn_row.png" alt="" style="width:760px;" /></p>
 <ul>
-<li>สมมติทุกตัวเริ่มที่ <code>y = -50</code> และตกเฟรมละ 3 px เท่ากันหมด</li>
+<li>สมมติทุกตัวเริ่มที่ <code>y = -60</code> และตกเฟรมละ 2 px เท่ากันหมด</li>
 <li><strong>ทาย:</strong> ถึงพื้นเฟรมที่เท่าไร? แล้วชีวิต 3 ดวงจะเป็นอย่างไร? (จดคำตอบไว้ก่อน)</li>
 </ul>
 <blockquote>
-<p>ใบ้: ต้องเดินจาก −50 ไปให้เลย 398 (พื้น) ทีละ 3 px</p>
+<p>ใบ้: ต้องเดินจาก −60 ไปให้เลย 398 (พื้น) ทีละ 2 px</p>
 </blockquote>
 </section>
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="6" data-paginate="true" data-theme="default" lang="en-US" data-marpit-pagination="6" style="--paginate:true;--theme:default;" data-marpit-pagination-total="36">
 <h1 id="%E0%B9%80%E0%B8%89%E0%B8%A5%E0%B8%A2--%E0%B8%96%E0%B8%B6%E0%B8%87%E0%B8%9E%E0%B8%B7%E0%B9%89%E0%B8%99%E0%B8%9E%E0%B8%A3%E0%B9%89%E0%B8%AD%E0%B8%A1%E0%B8%81%E0%B8%B1%E0%B8%99-%E0%B9%80%E0%B8%AA%E0%B8%B5%E0%B8%A2-3-%E0%B8%8A%E0%B8%B5%E0%B8%A7%E0%B8%B4%E0%B8%95%E0%B9%83%E0%B8%99%E0%B9%80%E0%B8%9F%E0%B8%A3%E0%B8%A1%E0%B9%80%E0%B8%94%E0%B8%B5%E0%B8%A2%E0%B8%A7">เฉลย — ถึงพื้นพร้อมกัน เสีย 3 ชีวิตในเฟรมเดียว</h1>
 <ul>
-<li>ระยะทาง 398 − (−50) = 448 px · เฟรมละ 3 → 448 ÷ 3 = 149.3 → <strong>ทุกตัวถึงพื้นเฟรมที่ 150 พร้อมกัน</strong></li>
+<li>ระยะทาง 398 − (−60) = 458 px · เฟรมละ 2 → 458 ÷ 2 = 229 (เฟรม 229 อยู่ที่ 398 พอดี ยังไม่เลย) → <strong>ทุกตัวหลุดพื้นเฟรมที่ 230 พร้อมกัน</strong></li>
 <li>เฟรมนั้นลูปเจอตัวที่ 1 → lives 2 · ตัวที่ 2 → lives 1 · ตัวที่ 3 → lives 0 → <strong>GAME OVER ทันที</strong></li>
 </ul>
 <p>step4 จึงสุ่ม 2 อย่าง: <strong>ความสูงเริ่ม</strong> และ <strong>ความเร็ว</strong> (ภาพวาดตามสเกลจริงแกน y)</p>
@@ -135,28 +135,28 @@
 <tbody>
 <tr>
 <td>A</td>
-<td>−40</td>
-<td>4.5</td>
-<td>98</td>
-<td>3.3</td>
+<td>−60</td>
+<td>2.5</td>
+<td>184</td>
+<td>6.1</td>
 </tr>
 <tr>
 <td>B</td>
-<td>−200</td>
-<td>3.5</td>
-<td>171</td>
-<td>5.7</td>
+<td>−300</td>
+<td>2.0</td>
+<td>350</td>
+<td>11.7</td>
 </tr>
 <tr>
 <td>C</td>
-<td>−400</td>
-<td>2.5</td>
-<td>320</td>
-<td>10.7</td>
+<td>−700</td>
+<td>1.5</td>
+<td>733</td>
+<td>24.4</td>
 </tr>
 </tbody>
 </table>
-<p><strong>คำพูด:</strong> ตำแหน่งใหม่ = ตำแหน่งเดิม + ความเร็ว ทุกเฟรม (เหมือน Catch) → เฟรมจนถึงพื้น ≈ (398 − y เริ่ม) ÷ v · ตัว B: 598 ÷ 3.5 = 170.9 → <strong>171</strong></p>
+<p><strong>คำพูด:</strong> ตำแหน่งใหม่ = ตำแหน่งเดิม + ความเร็ว ทุกเฟรม (เหมือน Catch) → เฟรมจนถึงพื้น ≈ (398 − y เริ่ม) ÷ v · ตัว B: 698 ÷ 2 = 349 → เฟรม 349 อยู่ที่ 398 พอดี ยังไม่เลย → <strong>350</strong></p>
 <p><span style="font-size:.8em">*ถ้าบอร์ดวิ่ง 30 เฟรม/วินาที</span></p>
 </div>
 </div>
@@ -197,7 +197,7 @@
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="8" data-paginate="true" data-theme="default" lang="en-US" data-marpit-pagination="8" style="--paginate:true;--theme:default;" data-marpit-pagination-total="36">
 <h1 id="%E0%B8%95%E0%B8%B2%E0%B8%A1%E0%B8%95%E0%B8%B1%E0%B8%A7%E0%B9%80%E0%B8%A5%E0%B8%82%E0%B8%88%E0%B8%A3%E0%B8%B4%E0%B8%87%E0%B8%97%E0%B8%B5%E0%B8%A5%E0%B8%B0%E0%B9%80%E0%B8%9F%E0%B8%A3%E0%B8%A1--%E0%B8%8A%E0%B9%88%E0%B8%AD%E0%B8%87%E0%B8%A7%E0%B9%88%E0%B8%B2%E0%B8%87%E0%B8%AB%E0%B8%94%E0%B8%88%E0%B8%99%E0%B8%AB%E0%B8%B2%E0%B8%A2">ตามตัวเลขจริงทีละเฟรม — ช่องว่างหดจนหาย</h1>
 <p><img src="img/s12_aabb_trace.png" alt="" style="width:760px;" /></p>
-<p>กระสุนขึ้นเฟรมละ <strong>9</strong> ศัตรูลงเฟรมละ <strong>3.5</strong> → ช่องว่างหดเฟรมละ 9 + 3.5 = <strong>12.5 px</strong>: 47.5 → 35 → 22.5 → 10 → ทับกัน</p>
+<p>กระสุนขึ้นเฟรมละ <strong>9</strong> ศัตรูลงเฟรมละ <strong>2</strong> → ช่องว่างหดเฟรมละ 9 + 2 = <strong>11 px</strong>: 43 → 32 → 21 → 10 → ทับกัน</p>
 <table>
 <thead>
 <tr>
@@ -223,13 +223,13 @@
 <tr>
 <td>3</td>
 <td>ขอบบนกระสุน อยู่เหนือขอบล่างศัตรู?</td>
-<td>139 &lt; 117.5 + 24 = 141.5</td>
+<td>139 &lt; 116 + 24 = 140</td>
 <td>✓</td>
 </tr>
 <tr>
 <td>4</td>
 <td>ขอบล่างกระสุน เลยขอบบนศัตรู?</td>
-<td>139 + 14 = 153 &gt; 117.5</td>
+<td>139 + 14 = 153 &gt; 116</td>
 <td>✓</td>
 </tr>
 </tbody>
@@ -276,7 +276,7 @@ c100.7 8.3 195.3 44 280 108 55.3 42 101.7 93 139 153l9 14c2.7-4 5.7-8.7 9-14
 <p><span style="font-size:.85em;color:#57606a">ตัวอย่างทั่วไป (ไม่ใช่โค้ดแล็บ) ลองพิมพ์ทีละบรรทัดใน REPL ได้</span></p>
 <pre is="marp-pre" data-auto-scaling="downscale-only"><code class="language-python"><span class="hljs-keyword">import</span> random
 random.choice([<span class="hljs-string">&quot;RED&quot;</span>, <span class="hljs-string">&quot;ORANGE&quot;</span>, <span class="hljs-string">&quot;PINK&quot;</span>])   <span class="hljs-comment"># สุ่มหยิบ 1 ชิ้นจาก list เช่น &quot;PINK&quot;</span>
-random.uniform(<span class="hljs-number">2.5</span>, <span class="hljs-number">4.5</span>)                    <span class="hljs-comment"># สุ่มเลขทศนิยมในช่วง เช่น 3.48</span>
+random.uniform(<span class="hljs-number">1.5</span>, <span class="hljs-number">2.5</span>)                    <span class="hljs-comment"># สุ่มเลขทศนิยมในช่วง เช่น 1.98</span>
 <span class="hljs-keyword">for</span> index, color <span class="hljs-keyword">in</span> <span class="hljs-built_in">enumerate</span>([<span class="hljs-string">&quot;RED&quot;</span>, <span class="hljs-string">&quot;ORANGE&quot;</span>]):
     <span class="hljs-built_in">print</span>(index, color)                     <span class="hljs-comment"># ได้ 0 RED แล้ว 1 ORANGE</span>
 <span class="hljs-keyword">for</span> n <span class="hljs-keyword">in</span> [<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>]:
@@ -296,7 +296,7 @@ random.uniform(<span class="hljs-number">2.5</span>, <span class="hljs-number">4
 <tbody>
 <tr>
 <td><code>random.choice(list)</code> · <code>random.uniform(a, b)</code></td>
-<td>สีสุ่ม <code>random.choice(ENEMY_COLORS)</code> · ความเร็วสุ่ม 2.5 … 4.5</td>
+<td>สีสุ่ม <code>random.choice(ENEMY_COLORS)</code> · ความเร็วสุ่ม 1.5 … 2.5</td>
 </tr>
 <tr>
 <td><code>enumerate(list)</code></td>
@@ -380,20 +380,20 @@ random.uniform(<span class="hljs-number">2.5</span>, <span class="hljs-number">4
 </tbody>
 </table>
 <blockquote>
-<p><code>on_frame</code> แก้ค่า <code>score</code> กับ <code>lives</code> จึงต้องมี <code>global ship_x, ship_speed, score, lives, fire_cooldown</code> — ให้มาแล้วที่ <code>:52</code> อย่าลบ</p>
+<p><code>on_frame</code> แก้ <code>score</code> กับ <code>lives</code> จึงต้องมีบรรทัด <code>global</code> — ให้มาแล้วที่ <code>:52</code> อย่าลบ</p>
 </blockquote>
 </section>
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="13" data-paginate="true" data-theme="default" lang="en-US" data-marpit-pagination="13" style="--paginate:true;--theme:default;" data-marpit-pagination-total="36">
 <h1 id="game-over--return-false-%E0%B8%9A%E0%B8%AD%E0%B8%81-gamerun-%E0%B9%83%E0%B8%AB%E0%B9%89%E0%B8%AB%E0%B8%A2%E0%B8%B8%E0%B8%94">GAME OVER — <code>return False</code> บอก <code>game.run()</code> ให้หยุด</h1>
-<p><img src="img/s12_states.png" alt="" style="width:700px;" /></p>
+<p><img src="img/s12_states.png" alt="" style="width:600px;" /></p>
 <pre is="marp-pre" data-auto-scaling="downscale-only"><code class="language-python">            <span class="hljs-keyword">if</span> lives &lt;= <span class="hljs-number">0</span>:                   <span class="hljs-comment"># ค ชีวิตหมด = จบเกม</span>
-                game.sfx(<span class="hljs-string">&quot;gameover&quot;</span>)
+                game.sfx(<span class="hljs-string">&quot;gameover&quot;</span>)         <span class="hljs-comment"># เสียงจบ (ยิง = &quot;fire&quot;, โดน = &quot;hit&quot;)</span>
                 game.Text(<span class="hljs-string">&quot;GAME OVER&quot;</span>, <span class="hljs-number">320</span>, <span class="hljs-number">180</span>, game.RED)
                 <span class="hljs-keyword">return</span> <span class="hljs-literal">False</span>
 </code></pre>
 <ul>
 <li>ภาพซ้าย = FSM ไฟจราจรคาบ 2 (วงกลม = สถานะ ลูกศร = เหตุที่ทำให้เปลี่ยน) · ภาพขวา = เกมเราก็เป็น FSM: กำลังเล่น กับ พัก สลับกันด้วยปุ่ม Start · ชีวิตหมด → GAME OVER</li>
-<li>เหมือนตอนจบ Catch (<code>s04_catch.py:59-63</code>) แต่จบเพราะ <strong>ชีวิตหมด</strong> · engine เห็น <code>False</code> แล้วเลิกเรียก <code>on_frame</code> (<code>bentogame.py:996-997</code>) · สร้าง <code>game.Text</code> ตรงนี้ได้เพราะเกิด <strong>ครั้งเดียว</strong> · เสียง: <code>&quot;fire&quot;</code> ยิง · <code>&quot;hit&quot;</code> โดน · <code>&quot;gameover&quot;</code> จบ</li>
+<li>เหมือนจบ Catch (<code>s04_catch.py:59-63</code>) แต่จบเพราะ <strong>ชีวิตหมด</strong> · engine เห็น <code>False</code> แล้วเลิกเรียก <code>on_frame</code> (<code>bentogame.py:996-997</code>) · สร้าง <code>game.Text</code> ได้เพราะเกิด <strong>ครั้งเดียว</strong></li>
 </ul>
 </section>
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="14" data-paginate="true" data-theme="default" lang="en-US" data-marpit-pagination="14" style="--paginate:true;--theme:default;" data-marpit-pagination-total="36">
@@ -440,18 +440,18 @@ random.uniform(<span class="hljs-number">2.5</span>, <span class="hljs-number">4
 <td>x — ศัตรูกว้าง 30 จึงไม่ล้นขอบขวา 792</td>
 </tr>
 <tr>
-<td><code>-random.randint(40, 400)</code></td>
-<td>−400 … −40</td>
-<td>y ตอนสร้าง — เหนือจอ สูงต่ำไม่เท่ากัน</td>
+<td><code>-random.randint(60, 700)</code></td>
+<td>−700 … −60</td>
+<td>y ตอนสร้าง — เหนือจอ สูงต่ำต่างกันมาก ทยอยลงมา</td>
 </tr>
 <tr>
-<td><code>-random.randint(20, 200)</code></td>
-<td>−200 … −20</td>
-<td>y ตอนวนกลับ — ใกล้จอกว่า โผล่ไวกว่า</td>
+<td><code>-random.randint(100, 500)</code></td>
+<td>−500 … −100</td>
+<td>y ตอนวนกลับ — หายไปเหนือจอสักพักก่อนโผล่อีกรอบ</td>
 </tr>
 <tr>
-<td><code>random.uniform(2.5, 4.5)</code></td>
-<td>2.5 … 4.5 (ทศนิยม)</td>
+<td><code>random.uniform(1.5, 2.5)</code></td>
+<td>1.5 … 2.5 (ทศนิยม)</td>
 <td>ความเร็วตก px/เฟรม เก็บใน <code>enemy_speed</code></td>
 </tr>
 <tr>
@@ -461,6 +461,9 @@ random.uniform(<span class="hljs-number">2.5</span>, <span class="hljs-number">4
 </tr>
 </tbody>
 </table>
+<blockquote>
+<p>ค่าชุดนี้ตั้งให้ช้าพอที่มือใหม่เล่นได้รอบละราว 30–100 วินาที · อยากให้ยากขึ้นลองเพิ่มความเร็วเอง · ความยากแบบมีโหมดอยู่ใน step5</p>
+</blockquote>
 </section>
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="15" data-paginate="true" data-theme="default" lang="en-US" data-marpit-pagination="15" style="--paginate:true;--theme:default;" data-marpit-pagination-total="36">
 <h1 id="%E0%B8%8A%E0%B9%88%E0%B8%AD%E0%B8%87-34-%E0%B8%95%E0%B8%B2%E0%B8%A1%E0%B8%9C%E0%B8%B1%E0%B8%87--%E0%B8%82%E0%B8%B1%E0%B9%89%E0%B8%99-%E0%B8%81-%E0%B8%96%E0%B8%B6%E0%B8%87-%E0%B8%88">ช่อง (3+4) ตามผัง — ขั้น ก ถึง จ</h1>
@@ -475,7 +478,7 @@ random.uniform(<span class="hljs-number">2.5</span>, <span class="hljs-number">4
 <div style="display:flex;gap:22px;align-items:flex-start">
 <div style="flex:0 0 440px">
 <p><img src="img/s12_round.gif" alt="" style="width:440px;" /></p>
-<p><span style="font-size:.7em;color:#57606a">คลิปจำลองตรรกะ <code>shooter_step4.py</code> หนึ่งรอบ (ไม่ใช่ภาพจากบอร์ด) · ผู้เล่นอัตโนมัติเลี้ยวยานไปใต้ศัตรูตัวที่ต่ำที่สุด และกด A ค้าง</span></p>
+<p><span style="font-size:.7em;color:#57606a">คลิปจำลองตรรกะ <code>shooter_step4.py</code> (ไม่ใช่ภาพจากบอร์ด) · ผู้เล่นอัตโนมัติเลี้ยวยานไปใต้ศัตรูตัวที่ต่ำที่สุด และกด A ค้าง · เลือกรอบที่จบเร็ว (~21 วินาที) มาให้เห็นครบ ปกติยาวกว่านี้มาก</span></p>
 </div>
 <div style="flex:1">
 <div style="line-height:1.9">
@@ -522,7 +525,7 @@ random.uniform(<span class="hljs-number">2.5</span>, <span class="hljs-number">4
 </tr>
 <tr>
 <td>ลืม <code>break</code></td>
-<td>แทบไม่เห็นบนจอ (นาน ๆ ครั้งตัวเดียวได้ 2 แต้ม) แต่ผิดหลัก</td>
+<td>บนจอแทบไม่มีทางเห็น แต่ผิดหลัก: ศัตรูที่วนขึ้นบนแล้วยังถูกเช็คต่อ</td>
 <td>ใส่ไว้เสมอ = &quot;ตัวนี้จบแล้ว&quot;</td>
 </tr>
 <tr>
@@ -533,7 +536,7 @@ random.uniform(<span class="hljs-number">2.5</span>, <span class="hljs-number">4
 </tbody>
 </table>
 <blockquote>
-<p>ได้คะแนนตอนศัตรูเพิ่งโผล่ขอบบน (ยังเห็นไม่เต็มตัว) เป็นเรื่องปกติ: นัดที่ยังใช้อยู่แถว y −20 … 0 โดนมันได้ · แถว &quot;ลืม break&quot; จากการจำลองตรรกะบนคอมพิวเตอร์: 2 ใน 300 รอบ</p>
+<p>ได้คะแนนตอนศัตรูเพิ่งโผล่ขอบบน (ยังเห็นไม่เต็มตัว) เป็นเรื่องปกติ: นัดที่ยังใช้อยู่แถว y −20 … 0 โดนมันได้ · แถว &quot;ลืม break&quot;: จำลองตรรกะบนคอมพิวเตอร์ 100 รอบ ไม่เห็นแต้มซ้ำเลย</p>
 </blockquote>
 </section>
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="18" data-paginate="true" data-theme="default" lang="en-US" data-marpit-pagination="18" style="--paginate:true;--theme:default;" data-marpit-pagination-total="36">
@@ -707,19 +710,19 @@ random.uniform(<span class="hljs-number">2.5</span>, <span class="hljs-number">4
 </section>
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="24" data-paginate="true" data-theme="default" lang="en-US" data-marpit-pagination="24" style="--paginate:true;--theme:default;" data-marpit-pagination-total="36">
 <h1 id="%E0%B9%80%E0%B8%89%E0%B8%A5%E0%B8%A2-step4--%E0%B8%8A%E0%B9%88%E0%B8%AD%E0%B8%87-1--2">เฉลย step4 · ช่อง (1) + (2)</h1>
-<pre is="marp-pre" data-auto-scaling="downscale-only"><code class="language-python">enemies = [game.Box(random.randint(<span class="hljs-number">0</span>, game.WIDTH - <span class="hljs-number">30</span>), -random.randint(<span class="hljs-number">40</span>, <span class="hljs-number">400</span>),
+<pre is="marp-pre" data-auto-scaling="downscale-only"><code class="language-python">enemies = [game.Box(random.randint(<span class="hljs-number">0</span>, game.WIDTH - <span class="hljs-number">30</span>), -random.randint(<span class="hljs-number">60</span>, <span class="hljs-number">700</span>),
                     <span class="hljs-number">30</span>, <span class="hljs-number">24</span>, random.choice(ENEMY_COLORS)) <span class="hljs-keyword">for</span> _ <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(MAX_ENEMIES)]
-enemy_speed = [random.uniform(<span class="hljs-number">2.5</span>, <span class="hljs-number">4.5</span>) <span class="hljs-keyword">for</span> _ <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(MAX_ENEMIES)]
+enemy_speed = [random.uniform(<span class="hljs-number">1.5</span>, <span class="hljs-number">2.5</span>) <span class="hljs-keyword">for</span> _ <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(MAX_ENEMIES)]   <span class="hljs-comment"># ช้าพอให้ยิงทัน</span>
 
 <span class="hljs-keyword">def</span> <span class="hljs-title function_">respawn_enemy</span>(<span class="hljs-params">index</span>):
-    enemies[index].move_to(random.randint(<span class="hljs-number">0</span>, game.WIDTH - <span class="hljs-number">30</span>), -random.randint(<span class="hljs-number">20</span>, <span class="hljs-number">200</span>))
+    enemies[index].move_to(random.randint(<span class="hljs-number">0</span>, game.WIDTH - <span class="hljs-number">30</span>), -random.randint(<span class="hljs-number">100</span>, <span class="hljs-number">500</span>))
     enemies[index].set_color(random.choice(ENEMY_COLORS))
 </code></pre>
 <p><code>solution_codes/shooter_step4.py:30-32</code> และ <code>:41-43</code></p>
 <ul>
 <li>list comprehension สร้าง 6 กล่องในบรรทัดเดียว — ทำ <strong>ครั้งเดียว</strong> นอก <code>on_frame</code></li>
 <li><code>enemies[i]</code> กับ <code>enemy_speed[i]</code> คือ list คู่ขนาน: ตำแหน่ง i ของทั้งสอง list คือศัตรูตัวเดียวกัน</li>
-<li>วนกลับขึ้นบนใช้ y −200 … −20 (ใกล้จอกว่าตอนเริ่ม −400 … −40) ศัตรูที่วนกลับมาจึงโผล่ไวกว่ารอบแรก</li>
+<li>ตอนเริ่มใช้ y −700 … −60 (กระจายกว้าง 6 ตัวจึงทยอยลงมา) · ตอนวนกลับใช้ −500 … −100: ตัวที่เพิ่งจบรอบหายไปเหนือจอสักพัก — ที่ 2 px/เฟรม ใช้ 50–250 เฟรม (≈ 2–8 วินาที) กว่าจะถึงขอบบน ผู้เล่นได้พักหายใจ</li>
 <li>ความเร็วไม่ได้สุ่มใหม่ตอนวนกลับ — แต่ละตัวเร็วเท่าเดิมทั้งเกม (<code>respawn_enemy</code> ไม่แตะ <code>enemy_speed</code>)</li>
 </ul>
 </section>
@@ -838,9 +841,9 @@ enemy_speed = [random.uniform(<span class="hljs-number">2.5</span>, <span class=
 </foreignObject></svg><svg data-marpit-svg="" viewBox="0 0 1280 720"><foreignObject width="1280" height="720"><section id="30" data-paginate="true" data-theme="default" lang="en-US" data-marpit-pagination="30" style="--paginate:true;--theme:default;" data-marpit-pagination-total="36">
 <h1 id="%E0%B8%A5%E0%B8%B6%E0%B8%81%E0%B8%AD%E0%B8%B5%E0%B8%81%E0%B8%99%E0%B8%B4%E0%B8%94--%E0%B8%97%E0%B8%B3%E0%B9%84%E0%B8%A1%E0%B8%81%E0%B8%A3%E0%B8%B0%E0%B8%AA%E0%B8%B8%E0%B8%99%E0%B9%84%E0%B8%A1%E0%B9%88-%E0%B8%97%E0%B8%B0%E0%B8%A5%E0%B8%B8-%E0%B8%A8%E0%B8%B1%E0%B8%95%E0%B8%A3%E0%B8%B9">ลึกอีกนิด · ทำไมกระสุนไม่ &quot;ทะลุ&quot; ศัตรู</h1>
 <ul>
-<li>ต่อเฟรม กระสุนกับศัตรูเข้าหากันได้มากสุด 9 + 4.5 = <strong>13.5 px</strong> (ศัตรูเร็วสุด 4.5)</li>
+<li>ต่อเฟรม กระสุนกับศัตรูเข้าหากันได้มากสุด 9 + 2.5 = <strong>11.5 px</strong> (ศัตรูเร็วสุด 2.5)</li>
 <li>ช่วงที่แกน y ทับกันยาว = สูงศัตรู + สูงกระสุน = 24 + 14 = <strong>38 px</strong></li>
-<li>ก้าวละ 13.5 กระโดดข้ามช่วง 38 ไม่พ้น → ต้องมีอย่างน้อย 1 เฟรมที่ทับกัน <code>game.hit</code> เห็นแน่ (ถ้าแกน x ตรงกัน)</li>
+<li>ก้าวละ 11.5 กระโดดข้ามช่วง 38 ไม่พ้น → ต้องมีอย่างน้อย 1 เฟรมที่ทับกัน <code>game.hit</code> เห็นแน่ (ถ้าแกน x ตรงกัน)</li>
 <li>ถ้าวันหนึ่งทำกระสุนเร็ว 40 px/เฟรม จะเริ่มทะลุได้ — เกมจริงแก้ด้วยการเช็คทีละก้าวย่อย หรือยืดกล่องชนตามทางที่วิ่ง</li>
 </ul>
 </section>
@@ -849,7 +852,7 @@ enemy_speed = [random.uniform(<span class="hljs-number">2.5</span>, <span class=
 <ul>
 <li>นับของบนจอ step4: กระสุน 6 + ศัตรู 6 + ยาน 1 + ป้าย HUD 1 + ป้ายปุ่มของ <code>game.run()</code> 1 (<code>bentogame.py:957</code>) = <strong>15 ชิ้น</strong> + ป้าย GAME OVER ตอนจบ = <strong>16</strong></li>
 <li>engine บอกงบไว้ 32 ชิ้นรวมทุกอย่าง (<code>bentogame.py:827</code>) → เหลือที่ว่าง 32 − 16 = <strong>16 ชิ้น</strong></li>
-<li>ถ้า <code>game.Box(...)</code> ใหม่ทุกครั้งที่ศัตรูเกิดใหม่: 1 รอบเกิดใหม่ = แต้มที่ได้ + ชีวิตที่เสีย (3) · ผู้เล่นที่ได้ <strong>14 แต้ม</strong> ต้องสร้างกล่องใหม่ 14 + 3 = 17 ใบ → <strong>เกินงบแล้ว</strong> · ยิ่งเล่นเก่ง ยิ่งพังเร็ว (ผู้เล่นที่ไม่ยิงเลยจบเกมหลังเกิดใหม่แค่ 3 ครั้ง จึงไม่เห็นปัญหา)</li>
+<li>ถ้า <code>game.Box(...)</code> ใหม่ทุกครั้งที่ศัตรูเกิดใหม่: 1 รอบเกิดใหม่ = แต้มที่ได้ + ชีวิตที่เสีย (3) · ผู้เล่นที่ได้ <strong>14 แต้ม</strong> ต้องสร้างกล่องใหม่ 14 + 3 = 17 ใบ → <strong>เกินงบแล้ว</strong> · ผู้เล่นอัตโนมัติแบบคนทั่วไปในการจำลองได้ราว 70–80 แต้มต่อรอบ → เกินงบตั้งแต่ต้นรอบ (ผู้เล่นที่ไม่ยิงเลยจบเกมหลังเกิดใหม่แค่ 3 ครั้ง จึงไม่เห็นปัญหา)</li>
 <li>บนไมโครคอนโทรลเลอร์ยังมีเหตุผลอีก: สร้าง/ทิ้งของบ่อยทำให้ตัวเก็บขยะ (GC) หยุดเกมไปเก็บกวาด และหน่วยความจำแตกเป็นชิ้น ๆ — คู่มือ MicroPython แนะนำให้สร้างของที่ใช้นานไว้ตั้งแต่ต้น · มาตรฐานงานวิกฤต (JPL Power of Ten ข้อ 3, MISRA C 21.3) ห้ามจองหน่วยความจำใหม่หลังระบบเริ่มทำงาน</li>
 </ul>
 </section>

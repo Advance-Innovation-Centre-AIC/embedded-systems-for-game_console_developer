@@ -29,7 +29,7 @@ for bullet in bullets:
 #   1) ตำแหน่ง x สุ่มให้อยู่ในจอ (ใช้ random.randint, ระวังอย่าให้เลยขอบขวา game.WIDTH)
 #   2) ตำแหน่ง y ให้เป็นค่าติดลบ (เริ่มเหนือจอ) เพื่อให้ศัตรูทยอยร่วงลงมาไม่พร้อมกัน
 #   3) สีของแต่ละตัวสุ่มด้วย random.choice(ENEMY_COLORS)
-#   4) แล้วสร้าง enemy_speed เป็น list ความเร็วสุ่มต่อตัวด้วย random.uniform(...)
+#   4) แล้วสร้าง enemy_speed เป็น list ความเร็วสุ่มต่อตัวด้วย random.uniform(...) — ช้าพอให้ยิงทัน
 #   (ลองปรับช่วงค่าเอง / เปิด solution_codes/shooter_step4.py ถ้าติดจริง ๆ)
 enemies = [game.Box(0, -50, 30, 24, game.RED) for _ in range(MAX_ENEMIES)]   # <- placeholder: แก้ให้สุ่มตำแหน่ง/สี
 enemy_speed = [0.0 for _ in range(MAX_ENEMIES)]                              # <- placeholder: แก้ให้สุ่มความเร็ว
@@ -43,7 +43,7 @@ def find_free_bullet():
 # ----- เติมส่วนนี้เอง (งานของคุณ) (2): ศัตรูวนกลับขึ้นบน (เริ่มรอบใหม่เหนือจอ) -----
 # TODO: เติมตัวฟังก์ชันให้ศัตรูตัวที่ index "วนกลับขึ้นบน" (ย้ายกล่องเดิม ไม่สร้างใหม่)
 #   1) ใช้ enemies[index].move_to(...) (Box.move_to — bentogame.py:234) ย้ายไป x สุ่มในจอ,
-#      y ติดลบ (เหนือจอ) ด้วย random เหมือนตอนสร้างศัตรูในข้อ (1)
+#      y ติดลบ (เหนือจอ) ด้วย random.randint (ช่วงค่าดูตาราง "ชิ้นส่วนสุ่ม" ในสไลด์คาบ 12)
 #   2) เปลี่ยนสีใหม่ด้วย enemies[index].set_color(random.choice(ENEMY_COLORS))  (set_color — bentogame.py:259)
 def respawn_enemy(index):
     pass   # <- ลบ pass ออกเมื่อเริ่มเขียน
