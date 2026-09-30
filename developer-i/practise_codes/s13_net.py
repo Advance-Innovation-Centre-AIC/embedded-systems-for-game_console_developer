@@ -12,8 +12,8 @@ import mqtt
 import time
 
 # --- ตั้งค่า: แก้ 4 บรรทัดนี้ให้ตรงกับของจริงก่อนรัน ---
-SSID    = "HomeyPot_2.4G"          # ชื่อ WiFi (2.4GHz) ของห้องเรา
-PASSWORD = "Sweethome"     # รหัส WiFi
+SSID    = "YOUR_WIFI_SSID"          # ชื่อ WiFi (2.4GHz) ของห้องเรา
+PASSWORD = "YOUR_WIFI_PASSWORD"     # รหัส WiFi
 BROKER  = "test.mosquitto.org"       # MQTT broker สาธารณะ (ทดสอบได้เลย)
 TOPIC   = "tesaiot/class/leaderboard"   # ห้องเดียวกันทั้งคาบ ทุกคนใช้ topic นี้
 
