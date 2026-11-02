@@ -36,7 +36,7 @@
 #include "bento_random.h"
 #include "bento_runtime.h"
 
-/* The timers (แก้ได้). */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
 enum {
     FPS = 30,
     ROUND_SEC = 30, /* นาฬิกานับถอยหลัง 30 วินาที */
@@ -47,6 +47,14 @@ enum {
     BULLET_SPEED = 12,
     ENEMY_SPEED = 3,
     SHIP_SPEED = 6,
+    FIELD_W = 470, /* สนามยิงซ้ายมือ · ขวามือเป็นแผงตัวจับเวลา */
+    SHIP_Y = 326,
+    PANEL_X = 494,
+    BAR_W = 280
+};
+/* ---- end of settings ---- */
+
+enum {
     WARN_SEC = 5, /* 5 วินาทีสุดท้าย แถบแดงและมีเสียงนับ */
     PERCENT = 100,
     SHOT_SLOTS = FPS + 1 /* a shot a frame at most, for one second */
@@ -54,13 +62,9 @@ enum {
 
 /* The field on the left and the timer panel on the right. */
 enum {
-    FIELD_W = 470,
     SHIP_X = 200,
-    SHIP_Y = 326,
     SHIP_W = 62,
     GUN_X = 29, /* the bullet leaves from the ship's nose */
-    PANEL_X = 494,
-    BAR_W = 280,
     BAR_INSET = 2,
     BAR_H = 12,
     FRAME_Y = 42,
@@ -278,7 +282,7 @@ static bento_status_t add_clock(frame_timer_t *timer)
             0);
     }
     if (status == BENTO_OK) {
-        const int32_t bar_x = PANEL_X + BAR_INSET;
+        const int32_t bar_x = (int32_t)PANEL_X + BAR_INSET;
         const int32_t bar_y = FRAME_Y + BAR_INSET;
 
         status = bento_game_box_create(
@@ -351,8 +355,9 @@ static bento_status_t move_ship(frame_timer_t *timer,
     if (keys->left || keys->right) {
         const int32_t want =
             timer->ship_x + (keys->right ? SHIP_SPEED : -SHIP_SPEED);
-        const int32_t below =
-            (want < (FIELD_W - SHIP_W)) ? want : (FIELD_W - SHIP_W);
+        const int32_t below = (want < ((int32_t)FIELD_W - SHIP_W))
+                                  ? want
+                                  : ((int32_t)FIELD_W - SHIP_W);
 
         timer->ship_x = (below > 0) ? below : 0;
         status = bento_game_sprite_move_to(&timer->game, &timer->ship,
@@ -374,7 +379,7 @@ static void record_shot(frame_timer_t *timer)
 static bento_status_t launch_bullet(frame_timer_t *timer,
                                     bento_game_box_t *bullet)
 {
-    const int32_t bullet_y = SHIP_Y - BULLET_H;
+    const int32_t bullet_y = (int32_t)SHIP_Y - BULLET_H;
     bento_status_t status = bento_game_box_move_to(
         &timer->game, bullet, (bento_real_t)(timer->ship_x + GUN_X),
         (bento_real_t)bullet_y);
@@ -422,8 +427,9 @@ static bento_status_t drop_enemy(frame_timer_t *timer,
                                  bento_game_sprite_t *enemy)
 {
     int32_t x = 0;
-    bento_status_t status = bento_random_randint(
-        &timer->random, ENEMY_MIN_X, FIELD_W - ENEMY_MARGIN, &x);
+    bento_status_t status =
+        bento_random_randint(&timer->random, ENEMY_MIN_X,
+                             (int32_t)FIELD_W - ENEMY_MARGIN, &x);
 
     if (status == BENTO_OK) {
         status = bento_game_sprite_move_to(&timer->game, enemy,
@@ -610,7 +616,7 @@ static bento_status_t show_clock(frame_timer_t *timer)
 
 static bento_status_t show_fire(frame_timer_t *timer)
 {
-    const int32_t ideal = (FPS * PERCENT) / COOLDOWN;
+    const int32_t ideal = ((int32_t)FPS * PERCENT) / (int32_t)COOLDOWN;
     char text[TEXT_CHARS];
     bento_status_t status = BENTO_OK;
 
