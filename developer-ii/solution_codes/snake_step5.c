@@ -51,11 +51,6 @@ enum {
     MENU_POLL_MS = 125 /* 1 รอบ ~8/วิ (กันลั่นปุ่ม + ไม่ busy-hang) */
 };
 
-/* โหมดความยาก = ค่า fps ของ game tick (page_game_snake.c:42-46) */
-static const char *const MODE_NAMES[MODE_COUNT] = {"RELAXED", "CLASSIC",
-                                                   "TURBO"};
-static const int32_t MODE_FPS[MODE_COUNT] = {6, 9, 14};
-
 typedef struct {
     int32_t col;
     int32_t row;
@@ -200,11 +195,13 @@ static bento_status_t show_mode_line(snake_t *snake,
                                      const bento_game_text_t *menu_text,
                                      int32_t selected)
 {
+    static const char *const mode_names[MODE_COUNT] = {
+        "RELAXED", "CLASSIC", "TURBO"};
     char line[MENU_CHARS];
 
     (void)snprintf(line, sizeof(line),
                    "MODE: < %s >   (UP/DOWN, A=start)",
-                   MODE_NAMES[selected]);
+                   mode_names[selected]);
     return bento_game_text_set(&snake->game, menu_text, line);
 }
 
@@ -243,6 +240,8 @@ static bento_status_t menu_pause(void)
  * กิน CPU 100% */
 static bento_status_t choose_mode(snake_t *snake, int32_t *out_fps)
 {
+    /* โหมดความยาก = ค่า fps ของ game tick (page_game_snake.c:42-46) */
+    static const int32_t mode_fps[MODE_COUNT] = {6, 9, 14};
     int32_t selected = CLASSIC_MODE;
     bool chosen = false;
     bento_game_text_t menu_text;
@@ -259,7 +258,7 @@ static bento_status_t choose_mode(snake_t *snake, int32_t *out_fps)
         }
         if ((status == BENTO_OK) && chosen) {
             status = bento_game_text_set(&snake->game, &menu_text, "");
-            *out_fps = MODE_FPS[selected]; /* ค่า fps ของโหมดที่เลือก */
+            *out_fps = mode_fps[selected]; /* ค่า fps ของโหมดที่เลือก */
         } else if (status == BENTO_OK) {
             status = menu_pause();
         } else {

@@ -93,8 +93,6 @@ static const difficulty_t MODES[MODE_COUNT] = {
     {"HARD", 105, (bento_real_t)200.0, (bento_real_t)1200.0,
      (bento_real_t)-360.0},
 };
-static const char *const MODE_NAMES[MODE_COUNT] = {"EASY", "NORMAL",
-                                                   "HARD"};
 static const char BEST_NAME[] = "flappy";
 
 typedef struct {
@@ -150,14 +148,14 @@ static bento_status_t draw_sky(flappy_t *flappy)
         const int32_t height = (i < (SKY_BAND_COUNT - 1))
                                    ? band_h
                                    : (flappy->play_h - (band_h * i));
+        const int32_t top_px = i * band_h;
         bento_game_box_t band;
 
         bento_game_box_init(&band);
-        status =
-            bento_game_box_create(&flappy->game, &band, (bento_real_t)0,
-                                  (bento_real_t)(i * band_h),
-                                  (bento_real_t)flappy->game.width,
-                                  (bento_real_t)height, sky_bands[i]);
+        status = bento_game_box_create(
+            &flappy->game, &band, (bento_real_t)0, (bento_real_t)top_px,
+            (bento_real_t)flappy->game.width, (bento_real_t)height,
+            sky_bands[i]);
     }
     return status;
 }
@@ -367,15 +365,17 @@ static bool hit_pipe(const flappy_t *flappy, const pipe_t *pipe)
 {
     const int32_t half_bird = BIRD_BOX / 2;
     const int32_t half = pipe->gap / 2;
+    const int32_t gap_top_px = pipe->gap_y - half;
+    const int32_t gap_bottom_px = pipe->gap_y + half;
     bool hit = false;
 
     if (!((bento_real_t)(BIRD_X + half_bird) < pipe->x) &&
         !((bento_real_t)(BIRD_X - half_bird) >
           (pipe->x + (bento_real_t)PIPE_W))) {
         hit = ((flappy->bird_y - (bento_real_t)half_bird) <
-               (bento_real_t)(pipe->gap_y - half)) ||
+               (bento_real_t)gap_top_px) ||
               ((flappy->bird_y + (bento_real_t)half_bird) >
-               (bento_real_t)(pipe->gap_y + half));
+               (bento_real_t)gap_bottom_px);
     }
     return hit;
 }
@@ -590,8 +590,9 @@ static bento_status_t start_round(flappy_t *flappy)
     status =
         bento_game_text_set(&flappy->game, &flappy->status_label, text);
     for (i = 0; (status == BENTO_OK) && (i < PIPE_COUNT); i++) {
-        const bento_real_t first_x =
-            (bento_real_t)(flappy->game.width + (i * PIPE_SPACING));
+        const int32_t first_px =
+            flappy->game.width + (i * PIPE_SPACING);
+        const bento_real_t first_x = (bento_real_t)first_px;
 
         status = reset_pipe(flappy, &flappy->pipes[i], &first_x);
         if (status == BENTO_OK) {
@@ -614,11 +615,13 @@ static bento_status_t start_round(flappy_t *flappy)
 /* เมนูลอยทับฉากที่วาดครบแล้ว; BACK จากหน้าเมนู = เลิกเล่น */
 static bento_status_t pick_mode(flappy_t *flappy, bool *playing)
 {
+    static const char *const mode_names[MODE_COUNT] = {"EASY", "NORMAL",
+                                                       "HARD"};
     int32_t picked = -1;
     const char *heading =
         (flappy->dead_text != NULL) ? flappy->dead_text : "SELECT MODE";
     const bento_status_t status =
-        bento_game_menu(&flappy->game, MODE_NAMES, MODE_COUNT, heading,
+        bento_game_menu(&flappy->game, mode_names, MODE_COUNT, heading,
                         flappy->mode, &picked);
 
     *playing = picked >= 0;

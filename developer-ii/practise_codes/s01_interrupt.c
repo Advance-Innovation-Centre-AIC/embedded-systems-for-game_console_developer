@@ -32,8 +32,6 @@ enum {
     LOOP_MS = 5     /* พักสั้น ๆ พอ ไม่ให้ลูป busy เกินจำเป็น */
 };
 
-static const char BUTTON_NAME[] = "USER_BUTTON";
-
 typedef struct {
     uint32_t led;    /* ไฟดวงแรกไว้กระพริบเป็นจังหวะ */
     uint32_t button; /* ปุ่ม USER BTN1 = P7_0 บนบอร์ด */
@@ -55,9 +53,10 @@ static bento_status_t take_led(lab_t *lab)
 /* ปุ่ม ตั้งเป็นขาเข้า (no pull: the binding's latch is 0) */
 static bento_status_t open_button(lab_t *lab)
 {
+    static const char button_name[] = "USER_BUTTON";
     bento_machine_pin_cfg_t config;
     bento_status_t status = bento_machine_pin_open(
-        BUTTON_NAME, (uint32_t)strlen(BUTTON_NAME), &lab->button);
+        button_name, (uint32_t)strlen(button_name), &lab->button);
 
     if (status == BENTO_OK) {
         bento_machine_pin_cfg_init(&config);

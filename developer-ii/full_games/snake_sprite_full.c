@@ -70,7 +70,6 @@ typedef enum {
 /* คาบเวลาต่อ 1 ก้าวของงู (ms) ลอกมาจาก s_snake_modes */
 static const char *const MODE_NAMES[MODE_COUNT] = {"RELAXED", "CLASSIC",
                                                    "TURBO"};
-static const int32_t MODE_MS[MODE_COUNT] = {150, 115, 70};
 static const char BEST_NAME[] = "snake";
 
 typedef struct {
@@ -422,8 +421,9 @@ static bento_status_t build_round(snake_t *snake)
 /* run(update, fps=1000 / tick_ms): run() sleeps int(1000 / fps). */
 static int32_t frame_period_ms(int32_t mode)
 {
+    static const int32_t mode_ms[MODE_COUNT] = {150, 115, 70};
     const bento_real_t fps =
-        (bento_real_t)MS_PER_SECOND / (bento_real_t)MODE_MS[mode];
+        (bento_real_t)MS_PER_SECOND / (bento_real_t)mode_ms[mode];
 
     return (int32_t)((bento_real_t)MS_PER_SECOND / fps);
 }

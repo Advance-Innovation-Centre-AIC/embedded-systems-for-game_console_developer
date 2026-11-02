@@ -139,12 +139,13 @@ static bento_status_t add_pipe(flappy_t *flappy, pipe_t *pipe,
             (bento_real_t)pipe->gap_top, BENTO_GAME_GB_DARK);
     }
     if (status == BENTO_OK) {
+        const int32_t bottom_y = pipe->gap_top + gap;
+        const int32_t bottom_h = height - pipe->gap_top - gap;
+
         status = bento_game_box_create(
             &flappy->game, &pipe->bottom, (bento_real_t)start_x,
-            (bento_real_t)(pipe->gap_top + gap),
-            (bento_real_t)PIPE_WIDTH,
-            (bento_real_t)(height - pipe->gap_top - gap),
-            BENTO_GAME_GB_DARK);
+            (bento_real_t)bottom_y, (bento_real_t)PIPE_WIDTH,
+            (bento_real_t)bottom_h, BENTO_GAME_GB_DARK);
     }
     return status;
 }

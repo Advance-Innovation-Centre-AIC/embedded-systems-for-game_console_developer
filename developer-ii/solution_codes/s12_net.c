@@ -7,8 +7,8 @@
  *
  * Joins Wi-Fi (up to 6 tries, 2 s apart), connects to an MQTT broker,
  * subscribes to the class topic, publishes "player:score", then prints every
- * score message that arrives for 15 seconds and disconnects. Edit SSID,
- * PASSWORD, BROKER and TOPIC first; run it on the board.
+ * score message that arrives for 15 seconds and disconnects. Edit the
+ * SETTINGS table (Wi-Fi, broker, topic) first; run it on the board.
  *
  * Twin of s12_net.py (embedded-systems-for-game_console_developer/
  * developer-ii/solution_codes/s12_net.py). Style: CLEAN_C.md.
@@ -27,12 +27,23 @@
 #include "bento_time.h"
 #include "bento_wifi.h"
 
+/* The settings, one table that every step reads. */
+typedef struct {
+    const char *ssid;
+    const char *password;
+    const char *broker;
+    const char *topic;
+    const char *player;
+} settings_t;
+
 /* --- ตั้งค่า: แก้ 4 บรรทัดนี้ให้ตรงกับของจริงก่อนรัน --- */
-static const char SSID[] = "YOUR_WIFI_SSID";         /* WiFi 2.4GHz */
-static const char PASSWORD[] = "YOUR_WIFI_PASSWORD"; /* รหัส WiFi */
-static const char BROKER[] = "test.mosquitto.org"; /* broker สาธารณะ */
-static const char TOPIC[] = "tesaiot/class/leaderboard"; /* ห้องเดียวกัน */
-static const char PLAYER[] = "board-01"; /* แต่ละคนตั้งไม่ซ้ำ */
+static const settings_t SETTINGS = {
+    "YOUR_WIFI_SSID",            /* ชื่อ WiFi (2.4GHz) ของห้องเรา */
+    "YOUR_WIFI_PASSWORD",        /* รหัส WiFi */
+    "test.mosquitto.org",        /* MQTT broker สาธารณะ (ทดสอบได้เลย) */
+    "tesaiot/class/leaderboard", /* ห้องเดียวกันทั้งคาบ ทุกคนใช้ topic นี้ */
+    "board-01"                   /* ชื่อผู้เล่น/บอร์ดของเรา (แต่ละคนตั้งไม่ซ้ำ) */
+};
 
 enum {
     WIFI_TRIES = 6,  /* ครั้งแรกมักยังไม่ติด */
@@ -90,10 +101,10 @@ static bento_status_t wifi_connect(bool *joined)
     bento_status_t status = BENTO_OK;
 
     bento_wifi_connect_params_init(&params);
-    params.ssid = SSID;
-    params.ssid_len = (uint32_t)strlen(SSID);
-    params.pass = PASSWORD;
-    params.pass_len = (uint32_t)strlen(PASSWORD);
+    params.ssid = SETTINGS.ssid;
+    params.ssid_len = (uint32_t)strlen(SETTINGS.ssid);
+    params.pass = SETTINGS.password;
+    params.pass_len = (uint32_t)strlen(SETTINGS.password);
     answer = bento_wifi_connect_start(&params);
     if (answer == BENTO_OK) {
         status = wait_for(poll_wifi, 0U, &answer);
@@ -147,11 +158,11 @@ static bento_status_t connect_broker(uint32_t *client, bool *ok)
 
     (void)printf("กำลังต่อ MQTT broker ...\n");
     bento_mqtt_config_init(&config);
-    config.host = BROKER;
-    config.host_len = (uint32_t)strlen(BROKER);
+    config.host = SETTINGS.broker;
+    config.host_len = (uint32_t)strlen(SETTINGS.broker);
     config.port = (uint16_t)BROKER_PORT;
-    config.client_id = PLAYER;
-    config.client_id_len = (uint32_t)strlen(PLAYER);
+    config.client_id = SETTINGS.player;
+    config.client_id_len = (uint32_t)strlen(SETTINGS.player);
     answer = bento_mqtt_open_start(&config, client);
     if (answer == BENTO_OK) {
         status = wait_for(bento_mqtt_open_poll, *client, &answer);
@@ -166,11 +177,11 @@ static bento_status_t publish_score(uint32_t client)
     char payload[PAYLOAD_CHARS];
     bento_status_t status;
 
-    (void)snprintf(payload, sizeof(payload), "%s:%" PRId32, PLAYER,
-                   (int32_t)MY_SCORE);
-    status = bento_mqtt_publish(client, TOPIC, (uint32_t)strlen(TOPIC),
-                                (const uint8_t *)payload,
-                                (uint32_t)strlen(payload), 0U, 0U);
+    (void)snprintf(payload, sizeof(payload), "%s:%" PRId32,
+                   SETTINGS.player, (int32_t)MY_SCORE);
+    status = bento_mqtt_publish(
+        client, SETTINGS.topic, (uint32_t)strlen(SETTINGS.topic),
+        (const uint8_t *)payload, (uint32_t)strlen(payload), 0U, 0U);
     if (status == BENTO_OK) {
         (void)printf("ส่งคะแนนแล้ว -> %s\n", payload);
     }
@@ -218,7 +229,8 @@ static bento_status_t share_scores(uint32_t client)
     uint8_t granted = 0U;
     /* สมัครรับข้อความใน topic เดียวกัน เพื่อเห็นคะแนนของทุกบอร์ด */
     bento_status_t status = bento_mqtt_subscribe(
-        client, TOPIC, (uint32_t)strlen(TOPIC), 0U, &granted);
+        client, SETTINGS.topic, (uint32_t)strlen(SETTINGS.topic), 0U,
+        &granted);
 
     if (status == BENTO_OK) {
         status = publish_score(client);

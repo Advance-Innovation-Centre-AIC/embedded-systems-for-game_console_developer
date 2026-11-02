@@ -35,7 +35,6 @@ enum {
 /* The physics, read by more than one function. */
 static const bento_real_t DT = (bento_real_t)0.03; /* 1 เฟรม (วินาที) */
 /* เหลือความเร็วกี่ส่วน */
-static const bento_real_t BOUNCE = (bento_real_t)0.70;
 
 typedef struct {
     bento_game_t game;
@@ -123,24 +122,27 @@ static bento_real_t speed_up(bento_real_t velocity,
     const bento_real_t accel = (bento_real_t)900.0; /* px/s^2 per g */
     const bento_real_t friction = (bento_real_t)0.95;
     bento_real_t term = g_value * accel;
+    bento_real_t faster;
 
     term = term * DT;
-    velocity = velocity + term;
-    return velocity * friction;
+    faster = velocity + term;
+    return faster * friction;
 }
 
 /* เด้งขอบจอ ชนแล้วกลับทิศความเร็ว เหลือไว้ BOUNCE ส่วน */
 static void bounce(marble_t *marble)
 {
+    /* 1 = เด้งเต็ม */
+    const bento_real_t bounce_share = (bento_real_t)0.70;
     const bento_game_box_t *ball = &marble->ball;
 
     if ((ball->x <= (bento_real_t)0) ||
         (ball->x >= ((bento_real_t)marble->game.width - ball->w))) {
-        marble->vx = -marble->vx * BOUNCE;
+        marble->vx = -marble->vx * bounce_share;
     }
     if ((ball->y <= (bento_real_t)0) ||
         (ball->y >= ((bento_real_t)marble->game.height - ball->h))) {
-        marble->vy = -marble->vy * BOUNCE;
+        marble->vy = -marble->vy * bounce_share;
     }
 }
 
