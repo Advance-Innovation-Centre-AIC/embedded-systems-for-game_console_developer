@@ -42,15 +42,20 @@
 #pragma GCC optimize("fp-contract=off")
 #endif
 
-/* Sounds and rhythm (change these). */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
+enum {
+    NOTE_GAP = 8,   /* โน้ตถัดไปห่าง 8 เฟรม (ราว 0.27 วินาที) */
+    HIGH_EVERY = 6, /* เตือนด่วน: ดังทุก 6 เฟรม = 5 ครั้งต่อวินาที */
+    HIGH_NOTE = 88,
+    LOW_NOTE = 76
+};
+/* ---- end of settings ---- */
+
+/* Sounds and rhythm. */
 enum {
     GROUP_COUNT = 4,
     GROUP_MAX = 6,    /* the most sounds in one group */
     JINGLE_NOTES = 2, /* โด สูง -> ซอล สูง (เลข MIDI 72, 79) */
-    NOTE_GAP = 8,     /* โน้ตถัดไปห่าง 8 เฟรม (ราว 0.27 วินาที) */
-    HIGH_EVERY = 6,   /* เตือนด่วน: ดังทุก 6 เฟรม = 5 ครั้งต่อวินาที */
-    HIGH_NOTE = 88,
-    LOW_NOTE = 76,
     JINGLE_MS = 220,
     BEEP_MS = 90,
     TONE_VELOCITY = 100,
@@ -536,7 +541,7 @@ static bento_status_t step_jingle(board_t *board,
             status = show_note(board, i + 1, jingle[i]);
         }
         board->jingle += 1;
-        if (board->jingle >= (JINGLE_NOTES * NOTE_GAP)) {
+        if (board->jingle >= (JINGLE_NOTES * (int32_t)NOTE_GAP)) {
             board->jingle = -1; /* every note played: stop counting */
         }
     }
