@@ -19,10 +19,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "bento_runtime.h"
-
 #include "bento_game.h"
 #include "bento_gpio.h"
+#include "bento_runtime.h"
 
 /* The grid and the game. */
 enum {
@@ -83,14 +82,18 @@ static bento_status_t redraw_snake(snake_t *snake)
     int32_t index;
     bento_status_t status = BENTO_OK;
 
-    for (index = 0; (status == BENTO_OK) && (index < SNAKE_LEN); index++) {
-        const uint32_t color = (index == 0) ? BENTO_GAME_GB_LIGHT : BENTO_GAME_GB_DARK;
+    for (index = 0; (status == BENTO_OK) && (index < SNAKE_LEN);
+         index++) {
+        const uint32_t color =
+            (index == 0) ? BENTO_GAME_GB_LIGHT : BENTO_GAME_GB_DARK;
 
-        status = bento_game_box_set_color(&snake->game, &snake->squares[index], color);
+        status = bento_game_box_set_color(
+            &snake->game, &snake->squares[index], color);
         if (status == BENTO_OK) {
-            status = bento_game_box_move_to(&snake->game, &snake->squares[index],
-                                            (bento_real_t)(snake->body[index].col * CELL_PX),
-                                            (bento_real_t)(snake->body[index].row * CELL_PX));
+            status = bento_game_box_move_to(
+                &snake->game, &snake->squares[index],
+                (bento_real_t)(snake->body[index].col * CELL_PX),
+                (bento_real_t)(snake->body[index].row * CELL_PX));
         }
     }
     return status;
@@ -135,7 +138,8 @@ static bool on_reterminal(void)
 #endif
 
     bento_gpio_board_info_init(&info);
-    if ((bento_gpio_board_info(&info) == BENTO_OK) && (info.name != NULL)) {
+    if ((bento_gpio_board_info(&info) == BENTO_OK) &&
+        (info.name != NULL)) {
         answer = (strcmp(info.name, "Seeed reTerminal") == 0);
     }
     return answer;
@@ -158,17 +162,21 @@ static bento_status_t add_snake(snake_t *snake)
         snake->body[i] = (cell_t){START_COL - i, START_ROW};
         bento_game_box_init(&snake->squares[i]);
         status = bento_game_box_create(
-            &snake->game, &snake->squares[i], (bento_real_t)(snake->body[i].col * CELL_PX),
-            (bento_real_t)(snake->body[i].row * CELL_PX), (bento_real_t)(CELL_PX - 2),
-            (bento_real_t)(CELL_PX - 2), BENTO_GAME_GB_DARK);
+            &snake->game, &snake->squares[i],
+            (bento_real_t)(snake->body[i].col * CELL_PX),
+            (bento_real_t)(snake->body[i].row * CELL_PX),
+            (bento_real_t)(CELL_PX - 2), (bento_real_t)(CELL_PX - 2),
+            BENTO_GAME_GB_DARK);
     }
     if (status == BENTO_OK) {
-        status = bento_game_box_set_color(&snake->game, &snake->squares[0], BENTO_GAME_GB_LIGHT);
+        status = bento_game_box_set_color(
+            &snake->game, &snake->squares[0], BENTO_GAME_GB_LIGHT);
     }
     if (status == BENTO_OK) {
         bento_game_text_init(&snake->score_text);
-        status = bento_game_text_create(&snake->game, &snake->score_text, "Score: 0", SCORE_X,
-                                        SCORE_Y, BENTO_GAME_WHITE);
+        status = bento_game_text_create(
+            &snake->game, &snake->score_text, "Score: 0", SCORE_X,
+            SCORE_Y, BENTO_GAME_WHITE);
     }
     snake->step_col = 1;
     snake->step_row = 0;
@@ -182,7 +190,8 @@ int main(void)
     bento_status_t status;
 
     (void)memset(snake, 0, sizeof(*snake));
-    bento_game_init(&snake->game, bento_runtime_get_ui(), bento_runtime_is_running);
+    bento_game_init(&snake->game, bento_runtime_get_ui(),
+                    bento_runtime_is_running);
     /* หน้าเริ่ม: Start=เล่น Back=ออก (ทำ start ให้ในตัว) */
     status = bento_game_title(&snake->game, "SNAKE", NULL, &quit);
     report_joystick(&snake->game);
@@ -192,7 +201,8 @@ int main(void)
     if ((status == BENTO_OK) && !quit) {
         bool finished = false;
 
-        status = bento_game_run(&snake->game, on_each_frame, snake, FPS, &finished);
+        status = bento_game_run(&snake->game, on_each_frame, snake, FPS,
+                                &finished);
     }
     return (status == BENTO_E_CANCELLED) ? 0 : (int)status;
 }

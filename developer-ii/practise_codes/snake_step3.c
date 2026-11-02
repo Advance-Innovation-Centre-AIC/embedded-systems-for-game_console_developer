@@ -21,11 +21,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "bento_runtime.h"
-
 #include "bento_game.h"
 #include "bento_gpio.h"
 #include "bento_random.h"
+#include "bento_runtime.h"
 
 /* The grid and the game. */
 enum {
@@ -35,7 +34,8 @@ enum {
     START_LEN = 3,
     START_COL = 6,
     START_ROW = 8,
-    MAX_LEN = 64, /* the ui's widget table: no box is left for a longer snake */
+    MAX_LEN =
+        64, /* the ui's widget table: no box is left for a longer snake */
     SCORE_X = 10,
     SCORE_Y = 8,
     FPS = 9
@@ -49,7 +49,9 @@ typedef struct {
 typedef struct {
     bento_game_t game;
     bento_random_t random;
-    cell_t body[MAX_LEN + 1]; /* one more while the new head is in and the tail not yet out */
+    cell_t body
+        [MAX_LEN +
+         1]; /* one more while the new head is in and the tail not yet out */
     int32_t length;
     bento_game_box_t squares[MAX_LEN];
     int32_t square_count;
@@ -71,7 +73,8 @@ static bool snake_covers(const snake_t *snake, cell_t cell)
     int32_t i;
 
     for (i = 0; i < snake->length; i++) {
-        if ((snake->body[i].col == cell.col) && (snake->body[i].row == cell.row)) {
+        if ((snake->body[i].col == cell.col) &&
+            (snake->body[i].row == cell.row)) {
             covered = true;
         }
     }
@@ -86,16 +89,20 @@ static bento_status_t place_food_at_random_empty_cell(snake_t *snake)
     bento_status_t status = BENTO_OK;
 
     while ((status == BENTO_OK) && !free_cell) {
-        status = bento_random_randint(&snake->random, 0, GRID_COLS - 1, &cell.col);
+        status = bento_random_randint(&snake->random, 0, GRID_COLS - 1,
+                                      &cell.col);
         if (status == BENTO_OK) {
-            status = bento_random_randint(&snake->random, 0, GRID_ROWS - 1, &cell.row);
+            status = bento_random_randint(&snake->random, 0,
+                                          GRID_ROWS - 1, &cell.row);
         }
-        free_cell = (status == BENTO_OK) && !snake_covers(snake, cell); /* ห้ามทับตัวงู */
+        free_cell = (status == BENTO_OK) &&
+                    !snake_covers(snake, cell); /* ห้ามทับตัวงู */
     }
     if (status == BENTO_OK) {
-        status = bento_game_box_move_to(&snake->game, &snake->food,
-                                        (bento_real_t)(cell.col * CELL_PX),
-                                        (bento_real_t)(cell.row * CELL_PX));
+        status =
+            bento_game_box_move_to(&snake->game, &snake->food,
+                                   (bento_real_t)(cell.col * CELL_PX),
+                                   (bento_real_t)(cell.row * CELL_PX));
     }
     return status;
 }
@@ -136,14 +143,18 @@ static bento_status_t redraw_snake(snake_t *snake)
     int32_t index;
     bento_status_t status = BENTO_OK;
 
-    for (index = 0; (status == BENTO_OK) && (index < snake->length); index++) {
-        const uint32_t color = (index == 0) ? BENTO_GAME_GB_LIGHT : BENTO_GAME_GB_DARK;
+    for (index = 0; (status == BENTO_OK) && (index < snake->length);
+         index++) {
+        const uint32_t color =
+            (index == 0) ? BENTO_GAME_GB_LIGHT : BENTO_GAME_GB_DARK;
 
-        status = bento_game_box_set_color(&snake->game, &snake->squares[index], color);
+        status = bento_game_box_set_color(
+            &snake->game, &snake->squares[index], color);
         if (status == BENTO_OK) {
-            status = bento_game_box_move_to(&snake->game, &snake->squares[index],
-                                            (bento_real_t)(snake->body[index].col * CELL_PX),
-                                            (bento_real_t)(snake->body[index].row * CELL_PX));
+            status = bento_game_box_move_to(
+                &snake->game, &snake->squares[index],
+                (bento_real_t)(snake->body[index].col * CELL_PX),
+                (bento_real_t)(snake->body[index].row * CELL_PX));
         }
     }
     return status;
@@ -162,8 +173,9 @@ static bento_status_t on_each_frame(void *user, bool *out_stop)
     if (status == BENTO_OK) {
         steer(snake, &keys);
         /* (Back=ออก / Start=หยุดชั่วคราว game loop จัดการให้) */
-        insert_head(snake, (cell_t){snake->body[0].col + snake->step_col,
-                                    snake->body[0].row + snake->step_row});
+        insert_head(snake,
+                    (cell_t){snake->body[0].col + snake->step_col,
+                             snake->body[0].row + snake->step_row});
 
         /* ----- เติมส่วนนี้เอง (งานของคุณ): หัวงูกินอาหารไหม + ถ้ากินก็โต/ได้แต้ม/มีเสียง -----
          * TODO: เขียน if/else เช็คว่าหัวงูไปอยู่ช่องเดียวกับอาหารหรือไม่
@@ -199,7 +211,8 @@ static bool on_reterminal(void)
 #endif
 
     bento_gpio_board_info_init(&info);
-    if ((bento_gpio_board_info(&info) == BENTO_OK) && (info.name != NULL)) {
+    if ((bento_gpio_board_info(&info) == BENTO_OK) &&
+        (info.name != NULL)) {
         answer = (strcmp(info.name, "Seeed reTerminal") == 0);
     }
     return answer;
@@ -213,13 +226,14 @@ static void report_joystick(const bento_game_t *game)
     }
 }
 
-static bento_status_t add_square(snake_t *snake, bento_game_box_t *box, cell_t cell,
-                                 uint32_t color)
+static bento_status_t add_square(snake_t *snake, bento_game_box_t *box,
+                                 cell_t cell, uint32_t color)
 {
     bento_game_box_init(box);
-    return bento_game_box_create(&snake->game, box, (bento_real_t)(cell.col * CELL_PX),
-                                 (bento_real_t)(cell.row * CELL_PX), (bento_real_t)(CELL_PX - 2),
-                                 (bento_real_t)(CELL_PX - 2), color);
+    return bento_game_box_create(
+        &snake->game, box, (bento_real_t)(cell.col * CELL_PX),
+        (bento_real_t)(cell.row * CELL_PX), (bento_real_t)(CELL_PX - 2),
+        (bento_real_t)(CELL_PX - 2), color);
 }
 
 static bento_status_t add_snake(snake_t *snake)
@@ -231,18 +245,22 @@ static bento_status_t add_snake(snake_t *snake)
     snake->square_count = START_LEN;
     for (i = 0; (status == BENTO_OK) && (i < START_LEN); i++) {
         snake->body[i] = (cell_t){START_COL - i, START_ROW};
-        status = add_square(snake, &snake->squares[i], snake->body[i], BENTO_GAME_GB_DARK);
+        status = add_square(snake, &snake->squares[i], snake->body[i],
+                            BENTO_GAME_GB_DARK);
     }
     if (status == BENTO_OK) {
-        status = bento_game_box_set_color(&snake->game, &snake->squares[0], BENTO_GAME_GB_LIGHT);
+        status = bento_game_box_set_color(
+            &snake->game, &snake->squares[0], BENTO_GAME_GB_LIGHT);
     }
     if (status == BENTO_OK) {
-        status = add_square(snake, &snake->food, (cell_t){0, 0}, BENTO_GAME_GB_LIGHTEST);
+        status = add_square(snake, &snake->food, (cell_t){0, 0},
+                            BENTO_GAME_GB_LIGHTEST);
     }
     if (status == BENTO_OK) {
         bento_game_text_init(&snake->score_text);
-        status = bento_game_text_create(&snake->game, &snake->score_text, "Score: 0", SCORE_X,
-                                        SCORE_Y, BENTO_GAME_WHITE);
+        status = bento_game_text_create(
+            &snake->game, &snake->score_text, "Score: 0", SCORE_X,
+            SCORE_Y, BENTO_GAME_WHITE);
     }
     snake->step_col = 1;
     snake->step_row = 0;
@@ -259,7 +277,8 @@ int main(void)
     (void)memset(snake, 0, sizeof(*snake));
     status = bento_random_init(&snake->random);
     if (status == BENTO_OK) {
-        bento_game_init(&snake->game, bento_runtime_get_ui(), bento_runtime_is_running);
+        bento_game_init(&snake->game, bento_runtime_get_ui(),
+                        bento_runtime_is_running);
         /* หน้าเริ่ม: Start=เล่น Back=ออก (ทำ start ให้ในตัว) */
         status = bento_game_title(&snake->game, "SNAKE", NULL, &quit);
         report_joystick(&snake->game);
@@ -273,7 +292,8 @@ int main(void)
     if ((status == BENTO_OK) && !quit) {
         bool finished = false;
 
-        status = bento_game_run(&snake->game, on_each_frame, snake, FPS, &finished);
+        status = bento_game_run(&snake->game, on_each_frame, snake, FPS,
+                                &finished);
     }
     return (status == BENTO_E_CANCELLED) ? 0 : (int)status;
 }

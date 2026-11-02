@@ -19,10 +19,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "bento_runtime.h"
-
 #include "bento_game.h"
 #include "bento_gpio.h"
+#include "bento_runtime.h"
 
 /* The grid and the still picture. */
 enum {
@@ -77,7 +76,8 @@ static bool on_reterminal(void)
 #endif
 
     bento_gpio_board_info_init(&info);
-    if ((bento_gpio_board_info(&info) == BENTO_OK) && (info.name != NULL)) {
+    if ((bento_gpio_board_info(&info) == BENTO_OK) &&
+        (info.name != NULL)) {
         answer = (strcmp(info.name, "Seeed reTerminal") == 0);
     }
     return answer;
@@ -91,13 +91,15 @@ static void report_joystick(const bento_game_t *game)
     }
 }
 
-static bento_status_t add_cell_box(snake_t *snake, bento_game_box_t *box, cell_t cell,
+static bento_status_t add_cell_box(snake_t *snake,
+                                   bento_game_box_t *box, cell_t cell,
                                    uint32_t color)
 {
     bento_game_box_init(box);
-    return bento_game_box_create(&snake->game, box, (bento_real_t)(cell.col * CELL_PX),
-                                 (bento_real_t)(cell.row * CELL_PX), (bento_real_t)(CELL_PX - 2),
-                                 (bento_real_t)(CELL_PX - 2), color);
+    return bento_game_box_create(
+        &snake->game, box, (bento_real_t)(cell.col * CELL_PX),
+        (bento_real_t)(cell.row * CELL_PX), (bento_real_t)(CELL_PX - 2),
+        (bento_real_t)(CELL_PX - 2), color);
 }
 
 /* แปลงช่องกริดของแต่ละปล้องให้เป็นกล่องสีเขียวบนจอ (ช่อง x 26 พิกเซล = ตำแหน่งจริง) */
@@ -111,21 +113,25 @@ static bento_status_t draw_still_picture(snake_t *snake)
         snake->body[i] = (cell_t){START_COL - i, START_ROW};
     }
     for (i = 0; (status == BENTO_OK) && (i < SNAKE_LEN); i++) {
-        status = add_cell_box(snake, &snake->squares[i], snake->body[i], BENTO_GAME_GB_DARK);
+        status = add_cell_box(snake, &snake->squares[i], snake->body[i],
+                              BENTO_GAME_GB_DARK);
     }
     if (status == BENTO_OK) {
         /* หัวงูสีอ่อนกว่า ให้เห็นชัดว่าหัวอยู่ไหน */
-        status = bento_game_box_set_color(&snake->game, &snake->squares[0], BENTO_GAME_GB_LIGHT);
+        status = bento_game_box_set_color(
+            &snake->game, &snake->squares[0], BENTO_GAME_GB_LIGHT);
     }
     if (status == BENTO_OK) {
-        status = add_cell_box(snake, &snake->food, (cell_t){FOOD_COL, FOOD_ROW},
+        status = add_cell_box(snake, &snake->food,
+                              (cell_t){FOOD_COL, FOOD_ROW},
                               BENTO_GAME_GB_LIGHTEST);
     }
     snake->score = 0;
     if (status == BENTO_OK) {
         bento_game_text_init(&snake->score_text);
-        status = bento_game_text_create(&snake->game, &snake->score_text, "Score: 0", SCORE_X,
-                                        SCORE_Y, BENTO_GAME_WHITE);
+        status = bento_game_text_create(
+            &snake->game, &snake->score_text, "Score: 0", SCORE_X,
+            SCORE_Y, BENTO_GAME_WHITE);
     }
     /* ----- เติมส่วนนี้เอง (งานของคุณ): ทดลองแก้ภาพนิ่งให้เป็นของคุณ -----
      *    1) เปลี่ยนตำแหน่งงูเริ่มต้น โดยแก้ START_COL / START_ROW ด้านบน แล้วรันดูว่างูย้ายไหม
@@ -143,7 +149,8 @@ int main(void)
     bento_status_t status;
 
     (void)memset(snake, 0, sizeof(*snake));
-    bento_game_init(&snake->game, bento_runtime_get_ui(), bento_runtime_is_running);
+    bento_game_init(&snake->game, bento_runtime_get_ui(),
+                    bento_runtime_is_running);
     /* หน้าเริ่ม: Start=เล่น Back=ออก (ทำ start ให้ในตัว) */
     status = bento_game_title(&snake->game, "SNAKE", NULL, &quit);
     report_joystick(&snake->game);
@@ -154,7 +161,8 @@ int main(void)
         bool finished = false;
 
         /* Back = ออก / Start = หยุดชั่วคราว จัดการให้โดย game loop */
-        status = bento_game_run(&snake->game, update, snake, FPS, &finished);
+        status =
+            bento_game_run(&snake->game, update, snake, FPS, &finished);
     }
     return (status == BENTO_E_CANCELLED) ? 0 : (int)status;
 }
