@@ -33,23 +33,16 @@
 #include "bento_time.h"
 #include "bento_wifi.h"
 
-/* The settings, one table that every step reads. */
-typedef struct {
-    const char *ssid;
-    const char *password;
-    const char *broker;
-    const char *topic;
-    const char *player;
-} settings_t;
-
-/* --- ตั้งค่า: แก้ 4 บรรทัดนี้ให้ตรงกับของจริงก่อนรัน --- */
-static const settings_t SETTINGS = {
-    "YOUR_WIFI_SSID",            /* ชื่อ WiFi (2.4GHz) ของห้องเรา */
-    "YOUR_WIFI_PASSWORD",        /* รหัส WiFi */
-    "test.mosquitto.org",        /* MQTT broker สาธารณะ (ทดสอบได้เลย) */
-    "tesaiot/class/leaderboard", /* ห้องเดียวกันทั้งคาบ ทุกคนใช้ topic นี้ */
-    "board-01"                   /* ชื่อผู้เล่น/บอร์ดของเรา (แต่ละคนตั้งไม่ซ้ำ) */
-};
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
+/* แก้ 4 บรรทัดนี้ให้ตรงกับของจริงก่อนรัน */
+static const char SSID[] = "YOUR_WIFI_SSID"; /* ชื่อ WiFi (2.4GHz) */
+static const char PASSWORD[] = "YOUR_WIFI_PASSWORD"; /* รหัส WiFi */
+static const char BROKER[] = "test.mosquitto.org"; /* broker สาธารณะ */
+/* ห้องเดียวกันทั้งคาบ ทุกคนใช้ topic นี้ */
+static const char TOPIC[] = "tesaiot/class/leaderboard";
+/* ชื่อผู้เล่น/บอร์ดของเรา (แต่ละคนตั้งไม่ซ้ำ) */
+static const char PLAYER[] = "board-01";
+/* ---- end of settings ---- */
 
 enum {
     WIFI_TRIES = 6,  /* ครั้งแรกมักยังไม่ติด */
@@ -86,7 +79,7 @@ static bento_status_t pause_ms(uint32_t ms)
 static bento_status_t join_wifi(bool *ok)
 {
     (void)printf("กำลังต่อ WiFi ...\n");
-    /* เติมช่อง (1): ต่อ WiFi ด้วย bento_wifi_connect_start (ใส่ SETTINGS.ssid, .password
+    /* เติมช่อง (1): ต่อ WiFi ด้วย bento_wifi_connect_start (ใส่ SSID, PASSWORD
      *   ใน bento_wifi_connect_params_t) แล้ววน bento_wifi_connect_poll ทุก POLL_MS
      *   จนไม่ใช่ BENTO_E_IN_PROGRESS ได้ BENTO_OK เมื่อสำเร็จ ให้เก็บผลไว้ใน *ok */
     *ok = false;
@@ -104,8 +97,8 @@ static void show_ip(void)
 static bento_status_t connect_broker(uint32_t *client, bool *ok)
 {
     (void)printf("กำลังต่อ MQTT broker ...\n");
-    /* เติมช่อง (3): ต่อ broker ด้วย bento_mqtt_open_start (host SETTINGS.broker, port
-     *   BROKER_PORT = 1883, client_id SETTINGS.player ใน bento_mqtt_config_t) แล้ววน
+    /* เติมช่อง (3): ต่อ broker ด้วย bento_mqtt_open_start (host BROKER, port
+     *   BROKER_PORT = 1883, client_id PLAYER ใน bento_mqtt_config_t) แล้ววน
      *   bento_mqtt_open_poll(*client) จนไม่ใช่ BENTO_E_IN_PROGRESS
      *   ได้ BENTO_OK เมื่อสำเร็จ ให้เก็บไว้ใน *ok
      *   ถ้า bento_mqtt_open_start ตอบ BENTO_E_UNSUPPORTED (BENTO Emulator ยังไม่มี
@@ -121,9 +114,9 @@ static bento_status_t publish_score(uint32_t client)
     char payload[PAYLOAD_CHARS];
     bento_status_t status;
 
-    (void)snprintf(payload, sizeof(payload), "%s:%" PRId32,
-                   SETTINGS.player, (int32_t)MY_SCORE);
-    /* เติมช่อง (4): ส่งคะแนนขึ้นกระดานด้วย bento_mqtt_publish(client, SETTINGS.topic,
+    (void)snprintf(payload, sizeof(payload), "%s:%" PRId32, PLAYER,
+                   (int32_t)MY_SCORE);
+    /* เติมช่อง (4): ส่งคะแนนขึ้นกระดานด้วย bento_mqtt_publish(client, TOPIC,
      *   ความยาว topic, payload, ความยาว payload, qos 0, flags 0) */
     (void)client;
     status = BENTO_OK;
@@ -174,8 +167,7 @@ static bento_status_t share_scores(uint32_t client)
     uint8_t granted = 0U;
     /* สมัครรับข้อความใน topic เดียวกัน เพื่อเห็นคะแนนของทุกบอร์ด */
     bento_status_t status = bento_mqtt_subscribe(
-        client, SETTINGS.topic, (uint32_t)strlen(SETTINGS.topic), 0U,
-        &granted);
+        client, TOPIC, (uint32_t)strlen(TOPIC), 0U, &granted);
 
     if (status == BENTO_OK) {
         status = publish_score(client);
@@ -245,7 +237,13 @@ static bento_status_t use_broker(void)
 int main(void)
 {
     bool ok = false;
-    bento_status_t status = join_wifi(&ok);
+    bento_status_t status;
+
+    /* the settings the blanks (1) and (3) read once written */
+    (void)SSID;
+    (void)PASSWORD;
+    (void)BROKER;
+    status = join_wifi(&ok);
 
     if ((status == BENTO_OK) && !ok) {
         (void)printf("ต่อ WiFi ไม่ได้ ลองเช็ค SSID/รหัสอีกที\n");
