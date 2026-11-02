@@ -34,8 +34,8 @@ enum {
 
 /* The physics, read by more than one function. */
 static const bento_real_t DT = (bento_real_t)0.03; /* 1 เฟรม (วินาที) */
-static const bento_real_t BOUNCE =
-    (bento_real_t)0.70; /* เหลือความเร็วกี่ส่วน */
+/* เหลือความเร็วกี่ส่วน */
+static const bento_real_t BOUNCE = (bento_real_t)0.70;
 
 typedef struct {
     bento_game_t game;
