@@ -53,7 +53,10 @@ enum {
     HUD_X = 16,
     HUD_Y = 8,
     STATUS_Y = 34,
-    LINE_CHARS = 64, /* the longest status line and its NUL */
+    LINE_CHARS = 64, /* "Score: ... Best: ..." with any two int32_t */
+    /* the mode line: 78 bytes with its NUL for NORMAL (a Thai letter is
+     * 3 bytes in UTF-8), within the 126 bytes a SET_TEXT carries */
+    STATUS_CHARS = 80,
     MODE_COUNT = 3,
     NORMAL_MODE = 1, /* เปิดมาชี้ NORMAL ก่อน เหมือนเกม C */
     GRACE_MS = 4000, /* 4 วิแรก: นกตายไม่ได้ */
@@ -580,7 +583,7 @@ static bento_status_t update(void *user, bool *out_stop)
 static bento_status_t start_round(flappy_t *flappy)
 {
     const int32_t middle_px = flappy->play_h / 2;
-    char text[LINE_CHARS];
+    char text[STATUS_CHARS];
     int32_t i;
     bento_status_t status;
 
