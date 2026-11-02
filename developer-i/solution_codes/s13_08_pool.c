@@ -53,7 +53,7 @@ enum {
     ENEMY_W = 16,
     ENEMY2_W = 21,
     FPS = 30,
-    TEXT_CHARS = 64
+    TEXT_CHARS = 128 /* a label's 126 bytes; Thai is 3 bytes a letter */
 };
 
 /* The texts and the return note. */

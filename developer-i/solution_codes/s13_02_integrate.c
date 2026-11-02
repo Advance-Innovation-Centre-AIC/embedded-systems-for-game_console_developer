@@ -80,7 +80,7 @@ enum {
     HINT_Y = 210,
     KEYS_Y = 300,
     TEXT_BYTES =
-        64, /* the longest text: three numbers and Thai words */
+        128, /* a label's 126 bytes; Thai is 3 bytes a letter */
     NUMBER_BYTES = 40
 };
 
