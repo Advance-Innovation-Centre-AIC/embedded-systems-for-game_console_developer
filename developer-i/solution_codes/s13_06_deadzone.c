@@ -38,18 +38,25 @@
 #include "bento_random.h"
 #include "bento_runtime.h"
 
-/* The controller and the field (แก้ได้). */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
 enum {
-    BAND_ON = 6,   /* ช่องว่าง ±6 px แบบ pong_step5.py */
-    SPEED = 5,     /* ไม้ AI ขยับเฟรมละ 5 px คงที่ */
+    BAND_ON = 6, /* ช่องว่าง ±6 px แบบ pong_step5.py (กด A สลับกับ 0) */
+    /* ไม้ AI ขยับเฟรมละ 5 px คงที่ — มีแค่ ขึ้น / หยุด / ลง ไม่มีครึ่ง ๆ กลาง ๆ */
+    SPEED = 5,
     BALL_STEP = 4, /* กดจอยค้าง ลูก (เป้า) ขยับเฟรมละ 4 px */
-    NOISE = 1,     /* ค่าที่วัดได้สั่น ±1 px เหมือนเซนเซอร์จริง */
-    FIELD_TOP = 44,
-    FIELD_BOTTOM = 356,
-    BALL_X = 90,
+    NOISE = 1,     /* ค่าที่วัดได้สั่น ±1 px เหมือนเซนเซอร์จริง (0 = วัดเป๊ะ) */
+    TOP = 44,      /* ขอบบน/ล่างของสนาม */
+    BOTTOM = 356,
+    BALL_X = 90, /* คอลัมน์ของลูก และของไม้ AI */
     AI_X = 330,
-    BALL_PX = 14,
+    BALL = 14, /* ขนาดสไปรต์ ball 14x14 · paddle 14x90 */
     PADDLE_H = 90,
+    HUD_X = 460
+};
+/* ---- end of settings ---- */
+
+/* The tone and the field. */
+enum {
     TONE_NOTE = 96,
     TONE_VELOCITY = 100,
     TONE_MS = 12,
@@ -74,7 +81,6 @@ enum {
 
 /* The panel on the right. */
 enum {
-    HUD_X = 460,
     BAND_TEXT_Y = 24,
     ERROR_TEXT_Y = 60,
     OUT_TEXT_Y = 96,
@@ -205,7 +211,7 @@ static bento_status_t add_text(bento_game_t *game, const char *text,
 static bento_status_t add_field(deadzone_t *deadzone)
 {
     bento_game_t *game = &deadzone->game;
-    const int32_t field_h = FIELD_BOTTOM - FIELD_TOP;
+    const int32_t field_h = BOTTOM - TOP;
     bento_game_box_t field;
     bento_status_t status = add_text(game, "TARGET", TARGET_LABEL_X,
                                      LABEL_Y, BENTO_GAME_YELLOW);
@@ -217,9 +223,9 @@ static bento_status_t add_field(deadzone_t *deadzone)
     if (status == BENTO_OK) {
         bento_game_box_init(&field);
         status = bento_game_box_create_styled(
-            game, &field, (bento_real_t)FIELD_X,
-            (bento_real_t)FIELD_TOP, (bento_real_t)FIELD_W,
-            (bento_real_t)field_h, COLOR_FIELD, COLOR_FIELD_EDGE, 1, 1);
+            game, &field, (bento_real_t)FIELD_X, (bento_real_t)TOP,
+            (bento_real_t)FIELD_W, (bento_real_t)field_h, COLOR_FIELD,
+            COLOR_FIELD_EDGE, 1, 1);
     }
     if (status == BENTO_OK) {
         /* the target line at the ball's centre */
@@ -340,12 +346,11 @@ static void read_keys(deadzone_t *deadzone,
 {
     const bento_real_t half_paddle =
         (bento_real_t)PADDLE_H / (bento_real_t)2;
-    const bento_real_t half_ball =
-        (bento_real_t)BALL_PX / (bento_real_t)2;
+    const bento_real_t half_ball = (bento_real_t)BALL / (bento_real_t)2;
 
     if (keys->up) {
         const bento_real_t highest =
-            ((bento_real_t)FIELD_TOP + half_paddle) - half_ball;
+            ((bento_real_t)TOP + half_paddle) - half_ball;
         const bento_real_t want =
             deadzone->ball_y - (bento_real_t)BALL_STEP;
 
@@ -353,7 +358,7 @@ static void read_keys(deadzone_t *deadzone,
     }
     if (keys->down) {
         const bento_real_t lowest =
-            ((bento_real_t)FIELD_BOTTOM - half_paddle) - half_ball;
+            ((bento_real_t)BOTTOM - half_paddle) - half_ball;
         const bento_real_t want =
             deadzone->ball_y + (bento_real_t)BALL_STEP;
 
@@ -376,7 +381,7 @@ static bento_status_t decide(deadzone_t *deadzone, bento_real_t *error,
 {
     /* อยากให้กลางไม้ตรงกลางลูก */
     const bento_real_t target =
-        (deadzone->ball_y + ((bento_real_t)BALL_PX / 2)) -
+        (deadzone->ball_y + ((bento_real_t)BALL / 2)) -
         ((bento_real_t)PADDLE_H / 2);
     int32_t noise = 0;
     const bento_status_t status =
@@ -403,7 +408,7 @@ static bento_status_t show_ball(deadzone_t *deadzone)
 {
     bento_game_t *game = &deadzone->game;
     const int32_t centre_y =
-        (int32_t)(deadzone->ball_y + ((bento_real_t)BALL_PX / 2));
+        (int32_t)(deadzone->ball_y + ((bento_real_t)BALL / 2));
     bento_status_t status = BENTO_OK;
 
     if (centre_y != deadzone->shown_ball) {
