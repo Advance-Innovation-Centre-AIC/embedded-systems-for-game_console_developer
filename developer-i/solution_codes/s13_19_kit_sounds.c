@@ -29,13 +29,19 @@
 #include "bento_gpio.h"
 #include "bento_runtime.h"
 
-/* The pages and the screen (change these). */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
+enum {
+    FPS = 30,
+    ROWS_Y = 60, /* แถวแรกอยู่ที่ y = 60 ห่างกันแถวละ 34 px */
+    ROW_H = 34
+};
+/* ---- end of settings ---- */
+
+/* The pages and the screen. */
 enum {
     PAGES = 6,
     ROWS_MAX = 5,  /* the most rows on one page */
     ROW_TEXTS = 6, /* the row texts on screen */
-    ROWS_Y = 60,   /* แถวแรกอยู่ที่ y = 60 */
-    ROW_H = 34,    /* ห่างกันแถวละ 34 px */
     BAR_X = 20,
     BAR_UP = 5,
     BAR_W = 752,
@@ -56,7 +62,6 @@ enum {
     LAMP_NOTE_STEP = 10,
     MIDDLE_C = 60,
     TONE_VELOCITY = 100,
-    FPS = 30,
     LINE_CHARS =
         128 /* the longest line is about 80 bytes (Thai is 3 a letter) */
 };
@@ -304,9 +309,11 @@ static bento_status_t build_screen(kit_t *kit)
 
 static bento_status_t move_bar(kit_t *kit)
 {
-    return bento_game_box_move_to(
-        &kit->game, &kit->bar, (bento_real_t)BAR_X,
-        (bento_real_t)((ROWS_Y - BAR_UP) + (kit->picked * ROW_H)));
+    const int32_t y =
+        ((int32_t)ROWS_Y - (int32_t)BAR_UP) + (kit->picked * ROW_H);
+
+    return bento_game_box_move_to(&kit->game, &kit->bar,
+                                  (bento_real_t)BAR_X, (bento_real_t)y);
 }
 
 static bento_status_t show_page(kit_t *kit)
