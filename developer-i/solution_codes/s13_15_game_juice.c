@@ -32,22 +32,33 @@
 #include "bento_random.h"
 #include "bento_runtime.h"
 
-/* The game (change these). */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
 enum {
-    BASE_SPEED = 2,     /* ความเร็วศัตรูตอนเริ่ม (px ต่อเฟรม) */
-    MAX_SPEED = 6,      /* เพดาน */
-    SCORE_PER_STEP = 5, /* ทุก 5 แต้มเร็วขึ้น 1 */
-    FLASH_FRAMES = 6,   /* บอสกะพริบขาวกี่เฟรม */
-    BOOM_FRAMES = 10,   /* ระเบิดค้างกี่เฟรม */
-    BOSS_HP = 5,        /* แถบพลังบอส 5 ก้อน */
-    BOSS_RESPAWN = 60,  /* บอสตัวใหม่มาหลังตัวเก่าแตก 60 เฟรม (2 วินาที) */
-    BOSS_BONUS = 5,
-    ENEMIES = 3, /* ขนาดชุดหมุนเวียน: ของที่ขยับพร้อมกันน้อย = ลื่นบนบอร์ด */
+    /* ความเร็วศัตรูตอนเริ่ม และเพดาน (px ต่อเฟรม) */
+    BASE_SPEED = 2,
+    MAX_SPEED = 6,
+    FLASH_FRAMES = 6,  /* บอสกะพริบขาวกี่เฟรม */
+    BOOM_FRAMES = 10,  /* ระเบิดค้างกี่เฟรม */
+    BOSS_HP = 5,       /* แถบพลังบอส 5 ก้อน */
+    BOSS_RESPAWN = 60, /* บอสตัวใหม่มาหลังตัวเก่าแตก 60 เฟรม (2 วินาที) */
+    /* ขนาดชุดหมุนเวียน: ของที่ขยับพร้อมกันน้อย = ลื่นบนบอร์ด */
+    ENEMIES = 3,
     BULLETS = 3,
     BOOMS = 2,
     FIRE_COOLDOWN = 6,
     BULLET_SPEED = 10,
     SHIP_SPEED = 8,
+    SHIP_Y = 330,
+    BOSS_Y = 60,
+    BOSS_W = 110,
+    BOSS_H = 34
+};
+/* ---- end of settings ---- */
+
+/* The game. */
+enum {
+    SCORE_PER_STEP = 5, /* ทุก 5 แต้มเร็วขึ้น 1 */
+    BOSS_BONUS = 5,
     BOSS_SPEED = 3,
     KINDS = 3,
     FPS = 30
@@ -56,14 +67,10 @@ enum {
 /* Where things are, in px, and the text buffers. */
 enum {
     SHIP_X0 = 365,
-    SHIP_Y = 330,
     SHIP_W = 62,
     MUZZLE_X = 28,
     MUZZLE_UP = 12,
     BOSS_X0 = 340,
-    BOSS_Y = 60,
-    BOSS_W = 110,
-    BOSS_H = 34,
     BOSS_HALF_W = BOSS_W / 2,
     BOSS_HALF_H = BOSS_H / 2,
     BOSS_RADIUS = 8,
@@ -419,7 +426,7 @@ static bento_status_t break_boss(juice_t *juice)
     }
     if (status == BENTO_OK) {
         status = boom_at(juice, juice->boss_x + BOSS_HALF_W,
-                         BOSS_Y + BOSS_HALF_H);
+                         (int32_t)BOSS_Y + BOSS_HALF_H);
     }
     juice->score += BOSS_BONUS;
     juice->away = BOSS_RESPAWN;
@@ -482,7 +489,7 @@ static bento_status_t drive_and_fire(juice_t *juice,
     if ((status == BENTO_OK) && keys->a && (juice->cool == 0) &&
         (free_bullet >= 0)) {
         juice->bullet_x[free_bullet] = juice->ship_x + MUZZLE_X;
-        juice->bullet_y[free_bullet] = SHIP_Y - MUZZLE_UP;
+        juice->bullet_y[free_bullet] = (int32_t)SHIP_Y - MUZZLE_UP;
         status = bento_game_box_move_to(
             &juice->game, &juice->bullets[free_bullet],
             (bento_real_t)juice->bullet_x[free_bullet],
@@ -521,7 +528,7 @@ static bento_status_t move_boss(juice_t *juice)
     if (juice->away == 0) {
         if ((juice->boss_x < BOSS_MARGIN) ||
             (juice->boss_x >
-             (juice->game.width - BOSS_MARGIN - BOSS_W))) {
+             (juice->game.width - BOSS_MARGIN - (int32_t)BOSS_W))) {
             juice->boss_vx = -juice->boss_vx;
         }
         juice->boss_x += juice->boss_vx;
