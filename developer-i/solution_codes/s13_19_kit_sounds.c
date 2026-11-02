@@ -134,16 +134,6 @@ static const page_t PAGE_TABLE[PAGES] = {
       {"", "", ""},
       {"", "", ""}}}};
 
-/* The tunes of the full games, in frames at 30 fps (one frame = 33 ms). */
-static const step_t COIN[] = {{83, 60, 1}, {88, 160, 1}};
-static const step_t TITLE[] = {
-    {60, 90, 3}, {64, 90, 3}, {67, 90, 3}, {72, 90, 3}};
-static const step_t TEAM[] = {{64, 110, 4},
-                              {0, 110, 4},
-                              {64, 110, 4},
-                              {67, 110, 4},
-                              {72, 110, 4}};
-
 /* The frame-counting tune player: no sleep. */
 typedef struct {
     const step_t *steps;
@@ -214,17 +204,29 @@ static bool player_step(bento_game_t *game, player_t *player,
 static bool find_recipe(const char *name, const step_t **out_steps,
                         int32_t *out_count)
 {
+    /* The tunes of the full games, in frames at 30 fps (one frame = 33 ms). */
+    static const step_t coin[] = {{83, 60, 1}, {88, 160, 1}};
+    static const step_t title[] = {
+        {60, 90, 3}, {64, 90, 3}, {67, 90, 3}, {72, 90, 3}};
+    static const step_t team[] = {{64, 110, 4},
+                                  {0, 110, 4},
+                                  {64, 110, 4},
+                                  {67, 110, 4},
+                                  {72, 110, 4}};
+    const size_t coin_count = sizeof(coin) / sizeof(coin[0]);
+    const size_t title_count = sizeof(title) / sizeof(title[0]);
+    const size_t team_count = sizeof(team) / sizeof(team[0]);
     bool found = true;
 
     if (strcmp(name, "TITLE") == 0) {
-        *out_steps = TITLE;
-        *out_count = (int32_t)(sizeof(TITLE) / sizeof(TITLE[0]));
+        *out_steps = title;
+        *out_count = (int32_t)title_count;
     } else if (strcmp(name, "COIN") == 0) {
-        *out_steps = COIN;
-        *out_count = (int32_t)(sizeof(COIN) / sizeof(COIN[0]));
+        *out_steps = coin;
+        *out_count = (int32_t)coin_count;
     } else if (strcmp(name, "TEAM") == 0) {
-        *out_steps = TEAM;
-        *out_count = (int32_t)(sizeof(TEAM) / sizeof(TEAM[0]));
+        *out_steps = team;
+        *out_count = (int32_t)team_count;
     } else {
         found = false;
     }
@@ -268,8 +270,9 @@ static bento_status_t build_screen(kit_t *kit)
         bento_game_box_init(&kit->bar);
         status = bento_game_box_create_styled(
             &kit->game, &kit->bar, (bento_real_t)BAR_X,
-            (bento_real_t)(ROWS_Y - BAR_UP), (bento_real_t)BAR_W,
-            (bento_real_t)(ROW_H - BAR_SHRINK), COLOR_BAR,
+            (bento_real_t)ROWS_Y - (bento_real_t)BAR_UP,
+            (bento_real_t)BAR_W,
+            (bento_real_t)ROW_H - (bento_real_t)BAR_SHRINK, COLOR_BAR,
             (int32_t)COLOR_BAR_EDGE, BAR_RADIUS, 0);
     }
     if (status == BENTO_OK) {

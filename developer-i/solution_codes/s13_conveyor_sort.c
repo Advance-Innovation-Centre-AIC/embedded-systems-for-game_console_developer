@@ -655,7 +655,8 @@ static bento_status_t move_belt(conveyor_t *conveyor)
     for (i = 0; (status == BENTO_OK) && (i < SLATS); i++) {
         bento_game_box_t *slat = &conveyor->slats[i];
         const bento_real_t y = slat->y + conveyor->speed;
-        const bool past_end = y > (bento_real_t)(BELT_END - SLAT_H);
+        const bool past_end =
+            y > ((bento_real_t)BELT_END - (bento_real_t)SLAT_H);
 
         status = bento_game_box_move_to(
             game, slat, slat->x,

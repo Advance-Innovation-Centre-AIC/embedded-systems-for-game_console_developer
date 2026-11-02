@@ -25,8 +25,8 @@
  *     program prints it there after title();
  *   - random is bento_random, the same generator and seed as the
  *     board's MicroPython, drawn in the same order;
- *   - MODES is a table of structs; boxes_overlap() takes two rects,
- *     as eight numbers pass the six-parameter limit;
+ *   - MODES is a table of structs, kept in main(); boxes_overlap()
+ *     takes two rects, as eight numbers pass the six-parameter limit;
  *   - find_free_bullet() answers a pointer, NULL for None;
  *   - positions and speeds are bento_real_t, the width of each
  *     board's MicroPython float; move_to() truncates to whole pixels;
@@ -112,14 +112,6 @@ typedef struct {
     bool lose_when_pass; /* an enemy that lands costs a life */
     bool lose_when_hit;  /* an enemy that rams the ship costs one */
 } difficulty_t;
-
-static const difficulty_t MODES[] = {
-    /* nothing punishes: practice */
-    {"FREE SHOOTER", 16, (bento_real_t)0.85, 99, false, false},
-    /* slow and sparse; landing is free, ramming the ship is not */
-    {"EASY", 26, (bento_real_t)0.70, 5, false, true},
-    /* the real thing: both cost a life */
-    {"DIFFICULT", 12, (bento_real_t)1.00, 3, true, true}};
 
 /* A box's place and size, for the shrunk hit test. */
 typedef struct {
@@ -702,13 +694,20 @@ static bento_status_t build_bullets(shooter_t *shooter)
 
 int main(void)
 {
+    static const difficulty_t modes[] = {
+        /* nothing punishes: practice */
+        {"FREE SHOOTER", 16, (bento_real_t)0.85, 99, false, false},
+        /* slow and sparse; landing is free, ramming the ship is not */
+        {"EASY", 26, (bento_real_t)0.70, 5, false, true},
+        /* the real thing: both cost a life */
+        {"DIFFICULT", 12, (bento_real_t)1.00, 3, true, true}};
     shooter_t *shooter = &g_shooter;
     bool quit = false;
     bento_status_t status;
     int32_t i;
 
     (void)memset(shooter, 0, sizeof(*shooter));
-    shooter->mode = &MODES[MODE];
+    shooter->mode = &modes[MODE];
     bento_game_init(&shooter->game, bento_runtime_get_ui(),
                     bento_runtime_is_running);
     bento_game_box_init(&shooter->ship);

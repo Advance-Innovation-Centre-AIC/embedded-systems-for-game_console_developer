@@ -85,9 +85,6 @@ enum {
     FPS = 30
 };
 
-static const uint32_t ENEMY_COLORS[ENEMY_COLOR_COUNT] = {
-    BENTO_GAME_RED, BENTO_GAME_ORANGE, BENTO_GAME_PINK};
-
 /* What the game keeps between frames. */
 typedef struct {
     bento_game_t game;
@@ -241,11 +238,13 @@ static bento_status_t move_bullets(shooter_t *shooter)
 /* One of the three enemy colours, at random. */
 static bento_status_t random_color(shooter_t *shooter, uint32_t *color)
 {
+    static const uint32_t enemy_colors[ENEMY_COLOR_COUNT] = {
+        BENTO_GAME_RED, BENTO_GAME_ORANGE, BENTO_GAME_PINK};
     uint32_t index = 0U;
     const bento_status_t status = bento_random_choice(
         &shooter->random, ENEMY_COLOR_COUNT, &index);
 
-    *color = ENEMY_COLORS[index];
+    *color = enemy_colors[index];
     return status;
 }
 

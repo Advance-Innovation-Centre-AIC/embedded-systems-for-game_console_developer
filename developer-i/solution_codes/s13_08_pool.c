@@ -47,6 +47,7 @@ enum {
     LAUNCH_Y = LOCK_Y - 22, /* จุดปล่อยของ เหนือช่องของตัวเอง */
     CURSOR_GAP = 5,
     CURSOR_H = 4,
+    CURSOR_Y = LOCK_Y + LOCK_H + CURSOR_GAP,
     PARKED_Y = -20, /* above this an item is free */
     ITEM_PARK = -100,
     ENEMY_W = 16,
@@ -201,9 +202,8 @@ static bento_status_t add_lockers(pool_t *pool)
     if (status == BENTO_OK) {
         status = bento_game_box_create(
             &pool->game, &pool->cursor, (bento_real_t)locker_x(0),
-            (bento_real_t)(LOCK_Y + LOCK_H + CURSOR_GAP),
-            (bento_real_t)LOCK_W, (bento_real_t)CURSOR_H,
-            BENTO_GAME_WHITE);
+            (bento_real_t)CURSOR_Y, (bento_real_t)LOCK_W,
+            (bento_real_t)CURSOR_H, BENTO_GAME_WHITE);
     }
     return status;
 }
@@ -355,8 +355,7 @@ static bento_status_t show_cursor(pool_t *pool, int32_t next_free)
     } else {
         status = bento_game_box_move_to(
             &pool->game, &pool->cursor,
-            (bento_real_t)locker_x(next_free),
-            (bento_real_t)(LOCK_Y + LOCK_H + CURSOR_GAP));
+            (bento_real_t)locker_x(next_free), (bento_real_t)CURSOR_Y);
         if (status == BENTO_OK) {
             status = bento_game_box_show(&pool->game, &pool->cursor);
         }

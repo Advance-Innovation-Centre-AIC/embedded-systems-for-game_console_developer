@@ -454,13 +454,13 @@ static bento_status_t show_pipe(kit_t *kit, const pipe_t *pipe, bool on)
 static bento_status_t move_pipe(kit_t *kit, pipe_t *pipe, int32_t x)
 {
     const int32_t cap_x = (x + (PIPE_W / 2)) - (CAP_W / 2);
+    /* the top pipe's lower edge is the gap's upper edge */
+    const int32_t top_y = pipe->gap_top - play_height(kit);
     bento_game_t *game = &kit->game;
     bento_status_t status;
 
-    /* the top pipe's lower edge is the gap's upper edge */
-    status = bento_game_box_move_to(
-        game, &pipe->top, (bento_real_t)x,
-        (bento_real_t)(pipe->gap_top - play_height(kit)));
+    status = bento_game_box_move_to(game, &pipe->top, (bento_real_t)x,
+                                    (bento_real_t)top_y);
     if (status == BENTO_OK) {
         status =
             bento_game_box_move_to(game, &pipe->bottom, (bento_real_t)x,

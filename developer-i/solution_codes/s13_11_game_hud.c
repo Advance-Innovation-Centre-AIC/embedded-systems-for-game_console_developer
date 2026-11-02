@@ -302,7 +302,7 @@ static bento_status_t add_ships(hud_game_t *hud)
 
     for (i = 0; (status == BENTO_OK) && (i < LIVES); i++) {
         const int32_t x = BENTO_GAME_WIDTH - SHIP_MARGIN -
-                          ((LIVES - i) * (SHIP_W + SHIP_GAP));
+                          ((LIVES - i) * ((int32_t)SHIP_W + SHIP_GAP));
 
         status = bento_game_sprite_create(&hud->game, &hud->ships[i],
                                           "ship", (bento_real_t)x,
@@ -337,7 +337,7 @@ static bento_status_t add_field(hud_game_t *hud)
     if (status == BENTO_OK) {
         status = bento_game_box_create_styled(
             game, &hud->basket, (bento_real_t)BASKET_X,
-            (bento_real_t)(GROUND_Y - BASKET_LIFT),
+            (bento_real_t)GROUND_Y - (bento_real_t)BASKET_LIFT,
             (bento_real_t)BASKET_W, (bento_real_t)BASKET_H,
             BENTO_GAME_ORANGE, (int32_t)BENTO_GAME_WHITE, BASKET_RADIUS,
             0);
@@ -502,7 +502,8 @@ static bento_status_t move_fruit(hud_game_t *hud, int32_t i)
             hud->score += 1;
             bento_game_sfx(&hud->game, "eat");
             status = drop(hud, i);
-        } else if (fruit->y > (bento_real_t)(GROUND_Y - FRUIT_PX)) {
+        } else if (fruit->y >
+                   ((bento_real_t)GROUND_Y - (bento_real_t)FRUIT_PX)) {
             status = lose_life(hud, i);
         } else {
             /* still falling */

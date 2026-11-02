@@ -126,7 +126,6 @@ typedef enum {
 } verdict_t;
 
 /* verdict()'s answer as Python prints it, by verdict_t. */
-static const char *const VERDICT_TEXT[] = {"", "lose", "win"};
 
 /* The explosion pictures of each pest kind: the small flash, then the big one. */
 static const char *const BOOM_NAMES[KINDS][2] = {
@@ -234,9 +233,11 @@ static bool check_number(int32_t got, int32_t want)
 
 static bool check_verdict(verdict_t got, verdict_t want)
 {
+    static const char *const verdict_text[] = {"", "lose", "win"};
+
     if (got != want) {
-        (void)printf("ยังไม่ผ่าน: ได้ %s ควรได้ %s\n", VERDICT_TEXT[got],
-                     VERDICT_TEXT[want]);
+        (void)printf("ยังไม่ผ่าน: ได้ %s ควรได้ %s\n", verdict_text[got],
+                     verdict_text[want]);
     }
     return got == want;
 }
@@ -247,15 +248,14 @@ static bool test_crops(void)
     static const int32_t crop_cases[][2] = {
         {104, 0}, {104, -1}, {150, -1}};
     static const bool crop_alive[] = {true, false, true};
+    const size_t case_count =
+        sizeof(crop_alive) / sizeof(crop_alive[0]);
     bool alive[CROPS];
     bool passed = true;
     int32_t i;
     int32_t crop;
 
-    for (i = 0;
-         passed &&
-         (i < (int32_t)(sizeof(crop_alive) / sizeof(crop_alive[0])));
-         i++) {
+    for (i = 0; passed && (i < (int32_t)case_count); i++) {
         for (crop = 0; crop < CROPS; crop++) {
             alive[crop] = crop_alive[i];
         }
@@ -276,14 +276,14 @@ static bool self_test(void)
     bool passed =
         check_number(clamp(clamp_case[0], clamp_case[1], clamp_case[2]),
                      clamp_case[2]);
+    const size_t verdict_count =
+        sizeof(verdict_wanted) / sizeof(verdict_wanted[0]);
     int32_t i;
 
     if (passed) {
         passed = test_crops();
     }
-    for (i = 0; passed && (i < (int32_t)(sizeof(verdict_wanted) /
-                                         sizeof(verdict_wanted[0])));
-         i++) {
+    for (i = 0; passed && (i < (int32_t)verdict_count); i++) {
         passed = check_verdict(
             verdict(verdict_cases[i][0], verdict_cases[i][1]),
             verdict_wanted[i]);
@@ -508,7 +508,7 @@ static bento_status_t burst_pest(farm_t *farm, int32_t slot)
     if (status == BENTO_OK) {
         status = bento_game_sprite_move_to(
             &farm->game, sprite, sprite->x - (bento_real_t)BOOM_SHIFT,
-            (bento_real_t)(LANE_Y - BOOM_SHIFT));
+            (bento_real_t)LANE_Y - (bento_real_t)BOOM_SHIFT);
     }
     farm->left -= 1;
     bento_game_sfx(&farm->game, "hit");

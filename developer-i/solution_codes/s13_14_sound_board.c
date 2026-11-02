@@ -104,20 +104,16 @@ typedef enum {
 typedef struct {
     const char *name;
     int32_t count;
-    const char *sounds[GROUP_MAX];
 } group_t;
 
-/* รวม 21 เสียง */
+/* รวม 21 เสียง: ชื่อกลุ่มกับจำนวน แล้วเสียงของกลุ่มที่แถวเดียวกัน */
 static const group_t GROUPS[GROUP_COUNT] = {
-    {"ตอบรับ", 5, {"select", "move", "back", "deny", "start", ""}},
-    {"ได้", 5, {"eat", "point", "hit", "win", "pong_score", ""}},
-    {"เสีย", 5, {"die", "fall", "lose", "lose_life", "gameover", ""}},
-    {"กระทำ",
-     6,
-     {"fire", "turn", "flap", "wall", "paddle", "explode"}}};
-
-/* A level's name as Python keeps it, by level_t. */
-static const char *const LEVEL_NAMES[] = {"", "HIGH", "LOW"};
+    {"ตอบรับ", 5}, {"ได้", 5}, {"เสีย", 5}, {"กระทำ", 6}};
+static const char *const GROUP_SOUNDS[GROUP_COUNT][GROUP_MAX] = {
+    {"select", "move", "back", "deny", "start", ""},
+    {"eat", "point", "hit", "win", "pong_score", ""},
+    {"die", "fall", "lose", "lose_life", "gameover", ""},
+    {"fire", "turn", "flap", "wall", "paddle", "explode"}};
 
 typedef struct {
     bento_game_t game;
@@ -144,7 +140,7 @@ board_t g_board;
 
 /* ---- the brain: pure, no screen ---- */
 
-/* Floor division and modulo, as Python's // and % (the divisor is positive). */
+/* Floor division and modulo, as Python does them (the divisor is positive). */
 static int32_t floor_div(int32_t value, int32_t divisor)
 {
     const int32_t quotient = value / divisor;
@@ -229,7 +225,8 @@ static bool check_hz(int32_t note, int32_t want_hundredths)
     const bento_real_t hundred = (bento_real_t)100.0;
     const bento_real_t half = (bento_real_t)0.5;
     const bento_real_t scaled = midi_hz(note) * hundred;
-    const int32_t got = (int32_t)(scaled + half);
+    const bento_real_t rounded = scaled + half;
+    const int32_t got = (int32_t)rounded;
     char got_text[BENTO_FMT_BUF_SIZE];
     char want_text[BENTO_FMT_BUF_SIZE];
     uint32_t length = 0U;
@@ -275,23 +272,21 @@ static bool self_test(void)
     static const int32_t beep_frames[] = {12, 13, 0, 6};
     static const bool beep_wanted[] = {true, false, true, false};
     static const char *const two_names[] = {"a", "b"};
+    const size_t hz_count = sizeof(hz_cases) / sizeof(hz_cases[0]);
+    const size_t beep_count =
+        sizeof(beep_wanted) / sizeof(beep_wanted[0]);
     char row[ROW_CHARS];
     bool passed = true;
     int32_t i;
 
-    for (i = 0; passed &&
-                (i < (int32_t)(sizeof(hz_cases) / sizeof(hz_cases[0])));
-         i++) {
+    for (i = 0; passed && (i < (int32_t)hz_count); i++) {
         passed = check_hz(hz_cases[i][0], hz_cases[i][1]);
     }
     if (passed) {
         row_text(two_names, 2, 1, row, (uint32_t)sizeof(row));
         passed = check_row(row, " a  [b]");
     }
-    for (i = 0;
-         passed &&
-         (i < (int32_t)(sizeof(beep_wanted) / sizeof(beep_wanted[0])));
-         i++) {
+    for (i = 0; passed && (i < (int32_t)beep_count); i++) {
         passed = check_beep(
             alarm_beep(beep_levels[i], beep_frames[i], HIGH_EVERY),
             beep_wanted[i]);
@@ -386,7 +381,7 @@ static bento_status_t paint_rows(board_t *board)
     int32_t i;
 
     for (i = 0; (status == BENTO_OK) && (i < GROUP_COUNT); i++) {
-        row_text(GROUPS[i].sounds, GROUPS[i].count,
+        row_text(GROUP_SOUNDS[i], GROUPS[i].count,
                  (i == board->row) ? board->column : -1, text,
                  (uint32_t)sizeof(text));
         status =
@@ -406,6 +401,8 @@ static bento_status_t set_alarm(board_t *board, level_t level)
                                            BENTO_GAME_YELLOW};
     static const char *const alarm_texts[] = {
         "NORMAL", "HIGH ALARM - press Y", "LOW: notify once"};
+    /* A level's name as Python keeps it, by level_t. */
+    static const char *const level_names[] = {"", "HIGH", "LOW"};
     char text[NEXT_CHARS];
     bento_status_t status;
 
@@ -419,7 +416,7 @@ static bento_status_t set_alarm(board_t *board, level_t level)
     }
     if (status == BENTO_OK) {
         (void)snprintf(text, sizeof(text), "X = raise %s",
-                       LEVEL_NAMES[board->next]);
+                       level_names[board->next]);
         status =
             bento_game_text_set(&board->game, &board->hud_next, text);
     }
@@ -485,7 +482,7 @@ static bento_status_t play_picked(board_t *board,
 
     if (bento_game_pressed_once(&board->game, BENTO_GAME_KEY_A, keys)) {
         bento_game_sfx(&board->game,
-                       GROUPS[board->row].sounds[board->column]);
+                       GROUP_SOUNDS[board->row][board->column]);
         status = bento_game_box_set_color(&board->game, &board->bar,
                                           COLOR_BAR_LIT);
         board->flash = FLASH_FRAMES;

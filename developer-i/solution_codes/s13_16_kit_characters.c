@@ -122,7 +122,8 @@ enum {
     BIRD_BOX = 36, /* the hit box is kinder than the picture */
     GRASS_H = 20,  /* พื้นหญ้าของนก = เส้นตาย */
     GRACE = 120,   /* 4 วินาทีแรก ที่ 30 fps */
-    BIRD_HALF_W = BIRD_W / 2, /* floor division, as Python's // */
+    BIRD_HALF_W =
+        BIRD_W / 2, /* floor division, as Python's floor divide */
     BIRD_HALF_H = BIRD_H / 2
 };
 
@@ -259,16 +260,6 @@ kit_t g_kit;
 /* The explosion pictures of each enemy kind: the small flash, then the big ring. */
 static const char *const BOOM_NAMES[KINDS][2] = {
     {"boom1", "boom2"}, {"boom3", "boom4"}, {"boom5", "boom6"}};
-
-/* Each piece's name and its key hint. */
-static const char *const PIECE_NAMES[PIECES] = {
-    "SHIP  shooter_full", "ENEMY + BOOM  shooter_full",
-    "BIRD  flappy_full", "SNAKE HEAD  snake_sprite_full",
-    "PADDLE + SPIN  pong_full"};
-static const char *const PIECE_HELP[PIECES] = {
-    "UP/DOWN = ขับ   A = ยิง   (ซ้าย-ขวาบินเอง)", "A = ยิงตัวล่างสุดให้ระเบิด",
-    "A หรือ UP = กระพือ", "A = เลี้ยวตามเข็ม   UP/DOWN = เลี้ยว",
-    "UP/DOWN = ขยับไม้   A = เสิร์ฟ"};
 
 /* ---- small helpers ---- */
 
@@ -574,7 +565,7 @@ static bento_status_t reset_bird(kit_t *kit)
 {
     bird_t *bird = &kit->bird;
     const int32_t middle =
-        bird->play_h / 2; /* floor division, as Python's // */
+        bird->play_h / 2; /* floor division, as Python's floor divide */
 
     bird->y = (bento_real_t)middle;
     bird->vy = (bento_real_t)0;
@@ -944,7 +935,7 @@ static void bounce_off_paddle(pong_t *pong)
     bento_real_t squares;
     bento_real_t speed;
 
-    pong->ball_x = (bento_real_t)(PADDLE_X + PADDLE_W);
+    pong->ball_x = (bento_real_t)PADDLE_X + (bento_real_t)PADDLE_W;
     pong->ball_vx = absolute(pong->ball_vx) + speed_up;
     pong->spin = pong->pad_vy * spin_share;
     aim += pong->spin;
@@ -1571,6 +1562,16 @@ play_piece(kit_t *kit, const bento_game_keys_t *keys, bool action)
 /* Hide the old piece whole, show the new one, then start its state again. */
 static bento_status_t open_piece(kit_t *kit, int32_t piece)
 {
+    /* Each piece's name and its key hint. */
+    static const char *const piece_names[PIECES] = {
+        "SHIP  shooter_full", "ENEMY + BOOM  shooter_full",
+        "BIRD  flappy_full", "SNAKE HEAD  snake_sprite_full",
+        "PADDLE + SPIN  pong_full"};
+    static const char *const piece_help[PIECES] = {
+        "UP/DOWN = ขับ   A = ยิง   (ซ้าย-ขวาบินเอง)",
+        "A = ยิงตัวล่างสุดให้ระเบิด", "A หรือ UP = กระพือ",
+        "A = เลี้ยวตามเข็ม   UP/DOWN = เลี้ยว",
+        "UP/DOWN = ขยับไม้   A = เสิร์ฟ"};
     char text[SAY_CHARS];
     bento_status_t status = hide_piece(kit, kit->piece);
 
@@ -1587,12 +1588,12 @@ static bento_status_t open_piece(kit_t *kit, int32_t piece)
     if (status == BENTO_OK) {
         (void)snprintf(text, sizeof(text),
                        "%d/%d  %s   (ซ้าย/ขวา = ตัวอื่น)", (int)(piece + 1),
-                       PIECES, PIECE_NAMES[piece]);
+                       PIECES, piece_names[piece]);
         status = bento_game_text_set(&kit->game, &kit->caption, text);
     }
     if (status == BENTO_OK) {
         status = bento_game_text_set(&kit->game, &kit->helper,
-                                     PIECE_HELP[piece]);
+                                     piece_help[piece]);
     }
     return status;
 }

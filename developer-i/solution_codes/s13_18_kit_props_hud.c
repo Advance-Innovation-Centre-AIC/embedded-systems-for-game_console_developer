@@ -895,7 +895,8 @@ static bento_status_t add_menu(kit_t *kit)
 {
     bento_game_t *game = &kit->game;
     menu_t *menu = &kit->menu;
-    const int32_t panel_h = MENU_BASE_H + (MENU_ROW_H * MENU_OPTIONS);
+    const int32_t panel_h =
+        MENU_BASE_H + (MENU_ROW_H * (int32_t)MENU_OPTIONS);
     const int32_t top = (game->height / 2) - (panel_h / 2);
     const int32_t middle = game->width / 2;
     bento_status_t status;

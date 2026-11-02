@@ -108,10 +108,6 @@ static const zone_t ZONES[ZONE_COUNT] = {
     {"ZONE 2", 290, 70, 150, 100, 0x2E7D4FU},
     {"ZONE 3", 130, 220, 170, 90, 0x8A3D6EU},
 };
-static const char *const PART_NAMES[PART_COUNT] = {
-    "ax < bx+bw", "ax+aw > bx", "ay < by+bh", "ay+ah > by"};
-static const char *const PART_OPERATORS[PART_COUNT] = {"<", ">", "<",
-                                                       ">"};
 
 typedef struct {
     bento_game_t game;
@@ -172,13 +168,18 @@ static void part_numbers(const bento_game_box_t *a,
                          const bento_game_box_t *b,
                          int32_t numbers[PART_COUNT][2])
 {
+    const bento_real_t a_right = a->x + a->w;
+    const bento_real_t a_bottom = a->y + a->h;
+    const bento_real_t b_right = b->x + b->w;
+    const bento_real_t b_bottom = b->y + b->h;
+
     numbers[PART_A_LEFT][0] = (int32_t)a->x;
-    numbers[PART_A_LEFT][1] = (int32_t)(b->x + b->w);
-    numbers[PART_A_RIGHT][0] = (int32_t)(a->x + a->w);
+    numbers[PART_A_LEFT][1] = (int32_t)b_right;
+    numbers[PART_A_RIGHT][0] = (int32_t)a_right;
     numbers[PART_A_RIGHT][1] = (int32_t)b->x;
     numbers[PART_A_TOP][0] = (int32_t)a->y;
-    numbers[PART_A_TOP][1] = (int32_t)(b->y + b->h);
-    numbers[PART_A_BOTTOM][0] = (int32_t)(a->y + a->h);
+    numbers[PART_A_TOP][1] = (int32_t)b_bottom;
+    numbers[PART_A_BOTTOM][0] = (int32_t)a_bottom;
     numbers[PART_A_BOTTOM][1] = (int32_t)b->y;
 }
 
@@ -351,12 +352,14 @@ static bento_status_t drive_agv(aabb_t *aabb,
     bento_status_t status = BENTO_OK;
 
     if ((step_x != 0) || (step_y != 0)) {
-        const bento_real_t x = clamp_real(
-            aabb->agv.x + (bento_real_t)step_x, (bento_real_t)FIELD_X,
-            (bento_real_t)((FIELD_X + FIELD_W) - A_W));
-        const bento_real_t y = clamp_real(
-            aabb->agv.y + (bento_real_t)step_y, (bento_real_t)FIELD_Y,
-            (bento_real_t)((FIELD_Y + FIELD_H) - A_H));
+        const int32_t max_x = (FIELD_X + FIELD_W) - A_W;
+        const int32_t max_y = (FIELD_Y + FIELD_H) - A_H;
+        const bento_real_t x =
+            clamp_real(aabb->agv.x + (bento_real_t)step_x,
+                       (bento_real_t)FIELD_X, (bento_real_t)max_x);
+        const bento_real_t y =
+            clamp_real(aabb->agv.y + (bento_real_t)step_y,
+                       (bento_real_t)FIELD_Y, (bento_real_t)max_y);
 
         status = bento_game_box_move_to(&aabb->game, &aabb->agv, x, y);
     }
@@ -404,6 +407,10 @@ static bento_status_t show_parts(aabb_t *aabb,
                                  const bool parts[PART_COUNT],
                                  const int32_t numbers[PART_COUNT][2])
 {
+    static const char *const part_names[PART_COUNT] = {
+        "ax < bx+bw", "ax+aw > bx", "ay < by+bh", "ay+ah > by"};
+    static const char *const part_operators[PART_COUNT] = {"<", ">",
+                                                           "<", ">"};
     char text[TEXT_CHARS];
     int32_t i;
     bento_status_t status = BENTO_OK;
@@ -413,7 +420,7 @@ static bento_status_t show_parts(aabb_t *aabb,
 
         (void)snprintf(text, sizeof(text),
                        "%s  %" PRId32 "%s%" PRId32 "  %s",
-                       PART_NAMES[i], numbers[i][0], PART_OPERATORS[i],
+                       part_names[i], numbers[i][0], part_operators[i],
                        numbers[i][1], parts[i] ? "True" : "False");
         status = set_if_changed(aabb, &aabb->lines[i],
                                 aabb->shown_lines[i], text);

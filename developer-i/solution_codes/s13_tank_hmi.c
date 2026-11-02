@@ -129,6 +129,7 @@ enum {
     LINE_OVERHANG = 6,
     LINE_H = 3,
     TAG_GAP = 14,
+    TARGET_TAG_X = TANK_X + TANK_W + TAG_GAP, /* right of the tank */
     TAG_RAISE = 11,
     FLOW_SPEED_MAX =
         5, /* the inflow dots run 1 .. 6 px a frame with the valve */
@@ -245,11 +246,13 @@ static bento_real_t next_level(bento_real_t level, bento_real_t inflow,
 static int32_t valve_step(bento_real_t level, int32_t target,
                           int32_t band)
 {
+    const int32_t low = target - band;
+    const int32_t high = target + band;
     int32_t move = 0; /* inside the band: hold still */
 
-    if (level < (bento_real_t)(target - band)) {
+    if (level < (bento_real_t)low) {
         move = 1; /* less water than the target: open the valve more */
-    } else if (level > (bento_real_t)(target + band)) {
+    } else if (level > (bento_real_t)high) {
         move = -1; /* more water than the target: close it */
     } else {
         /* hold */
@@ -266,7 +269,7 @@ static int32_t bars_on(bento_real_t level)
 static int32_t level_to_y(bento_real_t level)
 {
     const bento_real_t height =
-        level * (bento_real_t)(STEP_PERCENT * SEG_H);
+        level * ((bento_real_t)STEP_PERCENT * (bento_real_t)SEG_H);
     const bento_real_t risen = height / (bento_real_t)FULL;
     const bento_real_t y = (bento_real_t)BOTTOM - risen;
 
@@ -636,7 +639,9 @@ static bento_status_t slide(bento_game_t *game,
         bento_real_t x = item->x + step;
 
         if (x > (bento_real_t)end) {
-            x -= (bento_real_t)(end - start);
+            const int32_t span = end - start;
+
+            x -= (bento_real_t)span;
         }
         if ((int32_t)x != (int32_t)item->x) {
             status = bento_game_box_move_to(game, item, x, item->y);
@@ -710,10 +715,9 @@ static bento_status_t show_target(tank_hmi_t *tank)
         }
         /* game.Text has no move_to: move the label inside it directly */
         if (status == BENTO_OK) {
-            status =
-                bento_ui_set_pos(game->ui, tank->target_tag.id,
-                                 (int16_t)(TANK_X + TANK_W + TAG_GAP),
-                                 (int16_t)(line_y - TAG_RAISE));
+            status = bento_ui_set_pos(game->ui, tank->target_tag.id,
+                                      (int16_t)TARGET_TAG_X,
+                                      (int16_t)(line_y - TAG_RAISE));
         }
     }
     return status;

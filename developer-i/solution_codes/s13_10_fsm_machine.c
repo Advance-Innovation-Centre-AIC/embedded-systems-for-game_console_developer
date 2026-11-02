@@ -123,22 +123,11 @@ typedef enum {
 
 static const char *const NAMES[STATE_COUNT] = {"IDLE", "FILL", "WASH",
                                                "SPIN", "DONE"};
-static const char *const THAI[STATE_COUNT] = {"รอเริ่ม", "เติมน้ำ", "ซัก",
-                                              "ปั่นหมาด", "เสร็จแล้ว"};
 /* อยู่ในแต่ละสถานะกี่วินาที (IDLE รอปุ่ม ไม่มีเวลา) */
 static const int32_t SECONDS[STATE_COUNT] = {0, 3, 5, 4, 3};
-/* หมดเวลาแล้วไปสถานะไหน */
-static const state_t NEXT[STATE_COUNT] = {
-    STATE_IDLE, STATE_WASH, STATE_SPIN, STATE_DONE, STATE_IDLE};
-/* เสียงตอนเข้าแต่ละสถานะ (หยุดด้วย B = "deny") */
-static const char *const SOUNDS[STATE_COUNT] = {
-    "back", "start", "select", "fire", "win"};
 /* สีป้ายใหญ่ (เข้มพอให้ตัวขาวอ่านง่าย) */
 static const uint32_t BANNER[STATE_COUNT] = {
     0x3A4450U, 0x1F5FAFU, 0x0F7F8FU, 0xB0601AU, 0x2E8B57U};
-static const uint32_t LAMP[STATE_COUNT] = {
-    0x8899AAU, BENTO_GAME_BLUE, BENTO_GAME_CYAN, BENTO_GAME_ORANGE,
-    BENTO_GAME_GREEN};
 static const bento_real_t PI = (bento_real_t)3.14159265358979323846;
 
 typedef struct {
@@ -173,6 +162,9 @@ static int32_t frames_for(state_t state)
 static state_t fsm_step(state_t state, int32_t *left, bool start,
                         bool stop)
 {
+    /* หมดเวลาแล้วไปสถานะไหน */
+    static const state_t next_of[STATE_COUNT] = {
+        STATE_IDLE, STATE_WASH, STATE_SPIN, STATE_DONE, STATE_IDLE};
     state_t next = state;
 
     if (stop && (state != STATE_IDLE)) {
@@ -185,7 +177,7 @@ static state_t fsm_step(state_t state, int32_t *left, bool start,
     } else {
         *left -= 1; /* นับเฟรมถอยหลัง (ไม่มี sleep) */
         if (*left <= 0) {
-            next = NEXT[state];
+            next = next_of[state];
             *left = frames_for(next);
         }
     }
@@ -304,8 +296,9 @@ static bento_status_t add_cabinet(washer_t *washer)
     }
     if (status == BENTO_OK) {
         status = bento_game_box_create_styled(
-            &washer->game, &door, (bento_real_t)(DRUM_X - DRUM_RADIUS),
-            (bento_real_t)(DRUM_Y - DRUM_RADIUS),
+            &washer->game, &door,
+            (bento_real_t)DRUM_X - (bento_real_t)DRUM_RADIUS,
+            (bento_real_t)DRUM_Y - (bento_real_t)DRUM_RADIUS,
             (bento_real_t)(2 * DRUM_RADIUS),
             (bento_real_t)(2 * DRUM_RADIUS), COLOR_DRUM, COLOR_EDGE,
             DRUM_RADIUS, DRUM_EDGE_W);
@@ -324,9 +317,10 @@ static bento_status_t add_water(washer_t *washer)
         /* ระยะจากจุดกลางถึงกลางแถบ */
         const int32_t middle = DRUM_RADIUS - WATER_INSET -
                                (i * WATER_BAND_H) - (WATER_BAND_H / 2);
-        const int32_t width =
-            (int32_t)(2 * real_sqrt((bento_real_t)((rim * rim) -
-                                                   (middle * middle))));
+        const int32_t inside = (rim * rim) - (middle * middle);
+        const bento_real_t across =
+            (bento_real_t)2 * real_sqrt((bento_real_t)inside);
+        const int32_t width = (int32_t)across;
         const int32_t left_x = DRUM_X - (width / 2);
         const int32_t top_y = (DRUM_Y + middle) - (WATER_BAND_H / 2);
 
@@ -426,10 +420,11 @@ static bento_status_t pile_clothes(washer_t *washer)
     bento_status_t status = BENTO_OK;
 
     for (i = 0; (status == BENTO_OK) && (i < CLOTH_COUNT); i++) {
-        const bento_real_t offset = (bento_real_t)(i - 1) * apart;
+        const int32_t step = i - 1;
+        const bento_real_t offset = (bento_real_t)step * apart;
 
-        status = place(washer, &washer->clothes[i], (PI / 2) + offset,
-                       PILE_RADIUS);
+        status = place(washer, &washer->clothes[i],
+                       (PI / (bento_real_t)2) + offset, PILE_RADIUS);
     }
     return status;
 }
@@ -465,12 +460,20 @@ static bento_status_t show_rule(washer_t *washer, state_t state,
 static bento_status_t enter(washer_t *washer, state_t next, state_t old,
                             bool by_stop)
 {
+    static const char *const thai[STATE_COUNT] = {
+        "รอเริ่ม", "เติมน้ำ", "ซัก", "ปั่นหมาด", "เสร็จแล้ว"};
+    /* เสียงตอนเข้าแต่ละสถานะ (หยุดด้วย B = "deny") */
+    static const char *const sounds[STATE_COUNT] = {
+        "back", "start", "select", "fire", "win"};
+    static const uint32_t lamp[STATE_COUNT] = {
+        0x8899AAU, BENTO_GAME_BLUE, BENTO_GAME_CYAN, BENTO_GAME_ORANGE,
+        BENTO_GAME_GREEN};
     char text[TEXT_CHARS];
     bento_status_t status = bento_game_box_set_color(
         &washer->game, &washer->banner, BANNER[next]);
 
     (void)snprintf(text, sizeof(text), "%s   %s", NAMES[next],
-                   THAI[next]);
+                   thai[next]);
     if (status == BENTO_OK) {
         status = bento_game_text_set(&washer->game, &washer->hud_state,
                                      text);
@@ -481,11 +484,11 @@ static bento_status_t enter(washer_t *washer, state_t next, state_t old,
     }
     if (status == BENTO_OK) {
         status = bento_game_box_set_color(
-            &washer->game, &washer->lamps[next], LAMP[next]);
+            &washer->game, &washer->lamps[next], lamp[next]);
     }
     if ((status == BENTO_OK) && (next != old)) {
         /* ตอนเปิดเครื่องครั้งแรกไม่มีเสียง */
-        bento_game_sfx(&washer->game, by_stop ? "deny" : SOUNDS[next]);
+        bento_game_sfx(&washer->game, by_stop ? "deny" : sounds[next]);
     }
     if ((status == BENTO_OK) &&
         ((next == STATE_IDLE) || (next == STATE_FILL) ||
@@ -516,8 +519,9 @@ static bento_status_t show_water(washer_t *washer)
     for (i = 0; changed && (status == BENTO_OK) && (i < BAND_COUNT);
          i++) {
         const bool wet = i < level_now;
+        const bool was_wet = i < washer->level;
 
-        if (wet != (i < washer->level)) {
+        if (wet != was_wet) {
             status = show_band(washer, i, wet);
         }
     }
@@ -549,8 +553,8 @@ static bento_status_t move_clothes(washer_t *washer)
                 ((bento_real_t)i * swing);
             const bento_real_t rock = swing * real_sin(phase);
 
-            status = place(washer, &washer->clothes[i], (PI / 2) + rock,
-                           SWING_RADIUS);
+            status = place(washer, &washer->clothes[i],
+                           (PI / (bento_real_t)2) + rock, SWING_RADIUS);
         } else if (washer->state == STATE_SPIN) {
             const bento_real_t turn = (bento_real_t)i * third_turn;
 

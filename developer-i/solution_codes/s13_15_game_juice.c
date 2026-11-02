@@ -1,7 +1,7 @@
 /*
  * s13_15_game_juice.c -- คาบ 13 (คาบพิเศษ): ความสนุกที่มาจากคณิตศาสตร์ที่เรียนแล้ว (game juice)
  *
- * ลูกเล่นทุกอย่างใช้แค่สมการที่เรียนแล้ว: ยิ่งเก่งยิ่งยาก speed = min(BASE + score // 5, MAX)
+ * ลูกเล่นทุกอย่างใช้แค่สมการที่เรียนแล้ว: ยิ่งเก่งยิ่งยาก speed = min(BASE + floor(score / 5), MAX)
  * โดนแล้วกะพริบขาว 6 เฟรม c = max(0, c - 1) ระเบิดเป็นภาพ 10 เฟรม ครึ่งแรก boom1 ครึ่งหลัง boom2
  * บอสมีแถบพลัง 5 ก้อน โดนหนึ่งครั้งซ่อนหนึ่งก้อน
  * กด Start แล้วใช้จอยซ้าย/ขวาขับยาน กด A ค้าง = ยิงต่อเนื่อง (มีคูลดาวน์) ยิงศัตรูที่ตกลงมา +1 แต้ม
@@ -103,9 +103,7 @@ enum {
     COLOR_LASER = 0x80F4FF
 };
 
-/* The enemy pictures, and their sizes in px. */
-static const char *const ENEMY_NAMES[KINDS] = {"enemy", "enemy2",
-                                               "enemy3"};
+/* The enemy pictures' sizes in px (drop_enemy() names them). */
 static const int32_t ENEMY_SIZE[KINDS][2] = {
     {16, 14}, {21, 10}, {18, 14}};
 
@@ -200,25 +198,23 @@ static bool self_test(void)
     static const int32_t countdown_cases[][2] = {{3, 2}, {0, 0}};
     static const int32_t boom_times[] = {10, 5};
     static const char *const boom_wanted[] = {"boom1", "boom2"};
+    const size_t ramp_count =
+        sizeof(ramp_cases) / sizeof(ramp_cases[0]);
+    const size_t countdown_count =
+        sizeof(countdown_cases) / sizeof(countdown_cases[0]);
+    const size_t boom_count =
+        sizeof(boom_times) / sizeof(boom_times[0]);
     bool passed = true;
     int32_t i;
 
-    for (i = 0;
-         passed &&
-         (i < (int32_t)(sizeof(ramp_cases) / sizeof(ramp_cases[0])));
-         i++) {
+    for (i = 0; passed && (i < (int32_t)ramp_count); i++) {
         passed = check_number(ramp(ramp_cases[i][0]), ramp_cases[i][1]);
     }
-    for (i = 0; passed && (i < (int32_t)(sizeof(countdown_cases) /
-                                         sizeof(countdown_cases[0])));
-         i++) {
+    for (i = 0; passed && (i < (int32_t)countdown_count); i++) {
         passed = check_number(countdown(countdown_cases[i][0]),
                               countdown_cases[i][1]);
     }
-    for (i = 0;
-         passed &&
-         (i < (int32_t)(sizeof(boom_times) / sizeof(boom_times[0])));
-         i++) {
+    for (i = 0; passed && (i < (int32_t)boom_count); i++) {
         passed = check_name(boom_frame(boom_times[i]), boom_wanted[i]);
     }
     if (passed) {
@@ -350,6 +346,8 @@ static bento_status_t build_screen(juice_t *juice)
 /* An enemy of a random kind starts again above the screen. */
 static bento_status_t drop_enemy(juice_t *juice, int32_t slot)
 {
+    static const char *const enemy_names[KINDS] = {"enemy", "enemy2",
+                                                   "enemy3"};
     bento_game_sprite_t *enemy = &juice->enemies[slot];
     int32_t height = 0;
     bento_status_t status = bento_random_randint(
@@ -357,7 +355,7 @@ static bento_status_t drop_enemy(juice_t *juice, int32_t slot)
 
     if (status == BENTO_OK) {
         status = bento_game_sprite_frame(
-            &juice->game, enemy, ENEMY_NAMES[juice->enemy_kind[slot]]);
+            &juice->game, enemy, enemy_names[juice->enemy_kind[slot]]);
     }
     if (status == BENTO_OK) {
         status = bento_random_randint(&juice->random, DROP_X_MIN,
@@ -535,7 +533,7 @@ static bento_status_t move_boss(juice_t *juice)
                 &juice->game, &juice->boss_face,
                 (bento_real_t)((juice->boss_x + BOSS_HALF_W) -
                                FACE_HALF_W),
-                (bento_real_t)(BOSS_Y + FACE_DOWN));
+                (bento_real_t)BOSS_Y + (bento_real_t)FACE_DOWN);
         }
     } else {
         juice->away = countdown(juice->away);

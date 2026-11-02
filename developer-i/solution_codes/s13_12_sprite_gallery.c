@@ -147,18 +147,10 @@ static const sprite_row_t SPRITES[SPRITE_COUNT] = {
     {"snake_body", GAME_SNAKE, 16, 16, "die"},
     {"snake_food", GAME_SNAKE, 16, 16, "eat"}};
 
-static const char *const GAME_NAMES[GAME_COUNT] = {"Shooter", "Pong",
-                                                   "Flappy", "Snake"};
 static const uint32_t GAME_COLORS[GAME_COUNT] = {
     0x5A3FB0U, 0x2F6F9FU, 0x2E7D32U, BENTO_GAME_GB_DARK};
-static const char *const HEADS[HEAD_COUNT] = {
-    "snake_head_r", "snake_head_d", "snake_head_l", "snake_head_u"};
-static const char *const BOOMS[] = {"boom1", "boom2", "boom3",
-                                    "boom4", "boom5", "boom6"};
 /* จุดกลางของช่อง 5 ช่อง */
 static const int32_t SLOT_X[SLOTS] = {96, 246, 396, 546, 696};
-static const char BOOM_PREFIX[] = "boom";
-static const char HEAD_PREFIX[] = "snake_head";
 
 /* The frames of one picture: Python's tuple of names. */
 typedef struct {
@@ -208,14 +200,16 @@ static void centred(int32_t centre_x, int32_t centre_y, int32_t width,
     *out_y = centre_y - (height / 2);
 }
 
-/* HEADS as a frames_t. */
+/* The snake's heads as a frames_t. */
 static frames_t head_frames(void)
 {
+    static const char *const heads[HEAD_COUNT] = {
+        "snake_head_r", "snake_head_d", "snake_head_l", "snake_head_u"};
     frames_t frames;
     uint32_t i;
 
     for (i = 0U; i < (uint32_t)HEAD_COUNT; i++) {
-        frames.names[i] = HEADS[i];
+        frames.names[i] = heads[i];
     }
     frames.count = (uint32_t)HEAD_COUNT;
     return frames;
@@ -225,8 +219,12 @@ static frames_t head_frames(void)
  * · ภาพอื่นมีเฟรมเดียว */
 static frames_t anim_frames(const char *name)
 {
-    const size_t boom_length = sizeof(BOOM_PREFIX) - 1U;
-    const size_t head_length = sizeof(HEAD_PREFIX) - 1U;
+    static const char *const booms[] = {"boom1", "boom2", "boom3",
+                                        "boom4", "boom5", "boom6"};
+    static const char boom_prefix[] = "boom";
+    static const char head_prefix[] = "snake_head";
+    const size_t boom_length = sizeof(boom_prefix) - 1U;
+    const size_t head_length = sizeof(head_prefix) - 1U;
     frames_t frames;
     uint32_t i;
 
@@ -235,14 +233,14 @@ static frames_t anim_frames(const char *name)
     }
     frames.names[0] = name;
     frames.count = 1U;
-    if (strncmp(name, BOOM_PREFIX, boom_length) == 0) {
+    if (strncmp(name, boom_prefix, boom_length) == 0) {
         const int32_t kind = (int32_t)name[boom_length] - (int32_t)'0';
         const int32_t first = ((kind % 2) == 1) ? kind : (kind - 1);
 
-        frames.names[0] = BOOMS[first - 1];
-        frames.names[1] = BOOMS[first];
+        frames.names[0] = booms[first - 1];
+        frames.names[1] = booms[first];
         frames.count = 2U;
-    } else if (strncmp(name, HEAD_PREFIX, head_length) == 0) {
+    } else if (strncmp(name, head_prefix, head_length) == 0) {
         frames = head_frames();
     } else {
         /* one frame: the picture itself */
@@ -253,7 +251,9 @@ static frames_t anim_frames(const char *name)
 static const char *frame_at(const frames_t *frames, int32_t tick,
                             int32_t every)
 {
-    return frames->names[(uint32_t)(tick / every) % frames->count];
+    const int32_t step = tick / every;
+
+    return frames->names[(uint32_t)step % frames->count];
 }
 
 /* Where the name sits in its frames (Python's tuple.index). */
@@ -335,7 +335,8 @@ static bool self_test(void)
     static const char *const wants[] = {
         "18",        "1",           "(365, 146)", "('boom3', 'boom4')",
         "('ball',)", "snake_head_l"};
-    const int32_t count = (int32_t)(sizeof(names) / sizeof(names[0]));
+    const size_t name_count = sizeof(names) / sizeof(names[0]);
+    const int32_t count = (int32_t)name_count;
     char got[TEXT_CHARS];
     bool passed = true;
     int32_t i;
@@ -394,7 +395,7 @@ static bento_status_t add_slot_frames(gallery_t *gallery)
             status = bento_game_box_create_styled(
                 &gallery->game, &frame_box,
                 (bento_real_t)(SLOT_X[j] - CENTRE_HALF_W),
-                (bento_real_t)(SLOT_Y - CENTRE_HALF_H),
+                (bento_real_t)SLOT_Y - (bento_real_t)CENTRE_HALF_H,
                 (bento_real_t)CENTRE_W, (bento_real_t)CENTRE_H,
                 COLOR_CENTRE, (int32_t)BENTO_GAME_YELLOW, CENTRE_RADIUS,
                 CENTRE_BORDER_W);
@@ -402,7 +403,7 @@ static bento_status_t add_slot_frames(gallery_t *gallery)
             status = bento_game_box_create_styled(
                 &gallery->game, &frame_box,
                 (bento_real_t)(SLOT_X[j] - SIDE_HALF),
-                (bento_real_t)(SLOT_Y - SIDE_HALF),
+                (bento_real_t)SLOT_Y - (bento_real_t)SIDE_HALF,
                 (bento_real_t)SIDE_SIZE, (bento_real_t)SIDE_SIZE,
                 COLOR_SIDE, COLOR_SIDE_BORDER, SIDE_RADIUS, 0);
         }
@@ -521,11 +522,15 @@ static bento_status_t place_slots(gallery_t *gallery)
 /* เรียกเฉพาะตอนเลือกภาพใหม่ แล้วนิ่งจนกดอีกครั้ง */
 static bento_status_t show_gallery(gallery_t *gallery)
 {
+    static const char *const game_names[GAME_COUNT] = {
+        "Shooter", "Pong", "Flappy", "Snake"};
     const sprite_row_t *row = &SPRITES[gallery->index];
     bento_game_t *game = &gallery->game;
-    const frames_t frames = anim_frames(row->name);
+    frames_t frames;
     char text[TEXT_CHARS];
     bento_status_t status = place_slots(gallery);
+
+    frames = anim_frames(row->name);
 
     if (status == BENTO_OK) {
         (void)snprintf(text, sizeof(text), "%" PRId32 " / %d",
@@ -538,7 +543,7 @@ static bento_status_t show_gallery(gallery_t *gallery)
     }
     if (status == BENTO_OK) {
         (void)snprintf(text, sizeof(text), "เกม %s",
-                       GAME_NAMES[row->game]);
+                       game_names[row->game]);
         status = bento_game_text_set(game, &gallery->hud_game, text);
     }
     if (status == BENTO_OK) {
@@ -563,9 +568,11 @@ static bento_status_t show_gallery(gallery_t *gallery)
 /* ภาพกลางที่มีหลายเฟรม: เขียนจอเฉพาะตอนเฟรมเปลี่ยน */
 static bento_status_t animate_centre(gallery_t *gallery)
 {
-    const frames_t frames = anim_frames(SPRITES[gallery->index].name);
+    frames_t frames;
     const char *now;
     bento_status_t status = BENTO_OK;
+
+    frames = anim_frames(SPRITES[gallery->index].name);
 
     gallery->tick += 1;
     now = frame_at(&frames, gallery->tick, ANIM_EVERY);
