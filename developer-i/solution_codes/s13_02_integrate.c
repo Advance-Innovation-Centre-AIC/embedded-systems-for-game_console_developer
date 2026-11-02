@@ -37,11 +37,36 @@
 #include "bento_gpio.h"
 #include "bento_runtime.h"
 
-/* ---- 1) ตั้งค่า (แก้ได้) ---- */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
 enum {
-    V_START = 4, /* ความเร็วลูกตอนเริ่ม (พิกเซลต่อเฟรม) */
-    V_MAX = 12,
+    V_START = 4, /* ความเร็วลูกตอนเริ่ม และสูงสุด (พิกเซลต่อเฟรม) */
+    V_MAX = 12
+};
+/* น้ำเข้าตอนเริ่ม และสูงสุด (% ต่อเฟรม) */
+static const bento_real_t IN_START = (bento_real_t)0.40;
+static const bento_real_t IN_MAX = (bento_real_t)1.00;
+/* น้ำออกคงที่ (% ต่อเฟรม) */
+static const bento_real_t OUT = (bento_real_t)0.30;
+/* ระดับน้ำตอนเริ่ม (%) */
+static const bento_real_t LEVEL_START = (bento_real_t)30.0;
+enum {
     TRAIL_EVERY = 6, /* วางขีดเหลืองทุกกี่เฟรม */
+    LANE_X = 16,
+    LANE_Y = 100,
+    LANE_W = 370,
+    LANE_H = 100,
+    BALL = 14, /* ภาพ ball กว้าง/สูง 14 px */
+    X_LO = LANE_X + 4,
+    X_HI = LANE_X + LANE_W - BALL - 4,
+    TANK_X = 470,
+    TANK_Y = 100,
+    TANK_W = 120,
+    TANK_H = 262,
+    SEG_H = 24 /* แถบน้ำหนึ่งก้อน (10 ก้อน = 240 px = 100%) */
+};
+/* ---- end of settings ---- */
+
+enum {
     TICKS = 4,
     SEGMENTS = 10, /* ก้อนที่ 0 อยู่ก้นถัง */
     PERCENT_PER_SEGMENT = 10,
@@ -50,26 +75,13 @@ enum {
 
 /* Where things are, in px. */
 enum {
-    LANE_X = 16,
-    LANE_Y = 100,
-    LANE_W = 370,
-    LANE_H = 100,
-    BALL = 14, /* ภาพ ball กว้าง/สูง 14 px */
-    LANE_MARGIN = 4,
-    X_LO = LANE_X + LANE_MARGIN,
-    X_HI = LANE_X + LANE_W - BALL - LANE_MARGIN,
     BALL_DY = 24,
     TICK_X = -20,
     TICK_DY = 50,
     TICK_W = 3,
     TICK_H = 26,
     TICK_DX = 5,
-    TANK_X = 470,
-    TANK_Y = 100,
-    TANK_W = 120,
-    TANK_H = 262,
     TANK_BORDER_PX = 2,
-    SEG_H = 24, /* แถบน้ำหนึ่งก้อน (10 ก้อน = 240 px = 100%) */
     SEG_INSET = 10,
     SEG_GAP = 4,
     TEXT_X = 16,
@@ -92,8 +104,6 @@ enum {
     TANK_EDGE = 0x8899AA
 };
 
-/* น้ำออกคงที่ (% ต่อเฟรม) */
-static const bento_real_t OUT = (bento_real_t)0.30;
 static const bento_real_t FULL = (bento_real_t)100.0;
 
 typedef struct {
@@ -286,8 +296,8 @@ static bento_status_t add_equations(integrate_t *state)
 static bento_status_t add_lane(integrate_t *state)
 {
     char text[TEXT_BYTES];
-    const int32_t tick_y = LANE_Y + TICK_DY;
-    const int32_t ball_y = LANE_Y + BALL_DY;
+    const int32_t tick_y = (int32_t)LANE_Y + TICK_DY;
+    const int32_t ball_y = (int32_t)LANE_Y + BALL_DY;
     bento_game_box_t lane;
     bento_status_t status;
     uint32_t i;
@@ -319,8 +329,8 @@ static bento_status_t add_lane(integrate_t *state)
 /* The tank, its ten hidden blocks and the key caption. */
 static bento_status_t add_tank(integrate_t *state)
 {
-    const int32_t seg_x = TANK_X + SEG_INSET;
-    const int32_t seg_h = SEG_H - SEG_GAP;
+    const int32_t seg_x = (int32_t)TANK_X + SEG_INSET;
+    const int32_t seg_h = (int32_t)SEG_H - SEG_GAP;
     bento_game_box_t tank;
     bento_status_t status;
     int32_t i;
@@ -331,7 +341,7 @@ static bento_status_t add_tank(integrate_t *state)
         (bento_real_t)TANK_W, (bento_real_t)TANK_H, TANK_COLOR,
         TANK_EDGE, 1, TANK_BORDER_PX);
     for (i = 0; (status == BENTO_OK) && (i < SEGMENTS); i++) {
-        const int32_t top = TANK_Y + TANK_H - SEG_INSET -
+        const int32_t top = TANK_Y + TANK_H - (int32_t)SEG_INSET -
                             ((i + 1) * SEG_H) + (SEG_GAP / 2);
 
         status = bento_game_box_create(
@@ -353,21 +363,15 @@ static bento_status_t add_tank(integrate_t *state)
 /* x, v, level and inflow as they start (and as A starts them again). */
 static void restart(integrate_t *state)
 {
-    /* น้ำเข้าตอนเริ่ม (% ต่อเฟรม) · ระดับน้ำตอนเริ่ม (%) */
-    static const bento_real_t in_start = (bento_real_t)0.40;
-    static const bento_real_t level_start = (bento_real_t)30.0;
-
     state->x = X_LO;
     state->v = V_START;
-    state->level = level_start;
-    state->inflow = in_start;
+    state->level = LEVEL_START;
+    state->inflow = IN_START;
 }
 
 /* เข้า: ปุ่มเปลี่ยน "ที่เปลี่ยนต่อเฟรม" ไม่ได้ย้ายลูกหรือเติมน้ำตรง ๆ */
 static void read_keys(integrate_t *state, const bento_game_keys_t *keys)
 {
-    static const bento_real_t in_max =
-        (bento_real_t)1.00; /* น้ำเข้าสูงสุด */
     const bento_real_t step = (bento_real_t)0.10;
     bento_game_t *game = &state->game;
 
@@ -381,7 +385,7 @@ static void read_keys(integrate_t *state, const bento_game_keys_t *keys)
         const bento_real_t more = state->inflow + step;
 
         state->inflow =
-            round_hundredths((more < in_max) ? more : in_max);
+            round_hundredths((more < IN_MAX) ? more : IN_MAX);
     }
     if (bento_game_pressed_once(game, BENTO_GAME_KEY_DOWN, keys)) {
         const bento_real_t less = state->inflow - step;
