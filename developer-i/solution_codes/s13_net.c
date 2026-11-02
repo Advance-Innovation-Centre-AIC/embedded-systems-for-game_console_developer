@@ -42,13 +42,18 @@
 #include "bento_time.h"
 #include "bento_wifi.h"
 
-/* Set these four to the real ones before running: TOPIC and PLAYER
- * here, the WiFi ssid and password in join_wifi(), the broker in
- * connect_broker() (each sits in the one function that reads it). */
-/* one room, one topic for the whole lesson */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
+/* แก้ 4 บรรทัดนี้ให้ตรงกับของจริงก่อนรัน */
+static const char SSID[] =
+    "YOUR_WIFI_SSID"; /* ชื่อ WiFi (2.4GHz) ของห้องเรา */
+static const char PASSWORD[] = "YOUR_WIFI_PASSWORD"; /* รหัส WiFi */
+/* MQTT broker สาธารณะ (ทดสอบได้เลย) */
+static const char BROKER[] = "test.mosquitto.org";
+/* ห้องเดียวกันทั้งคาบ ทุกคนใช้ topic นี้ */
 static const char TOPIC[] = "tesaiot/class/leaderboard";
-/* our player or board name; each one picks another */
+/* ชื่อผู้เล่น/บอร์ดของเรา (แต่ละคนตั้งไม่ซ้ำ) */
 static const char PLAYER[] = "board-01";
+/* ---- end of settings ---- */
 
 enum {
     WIFI_TRIES = 6,       /* the first try often fails */
@@ -113,17 +118,14 @@ static bento_status_t wait_for_join(void)
 /* wifi.connect(SSID, PASSWORD): *joined is its True or False. */
 static bento_status_t join_wifi(bool *joined)
 {
-    static const char ssid[] =
-        "YOUR_WIFI_SSID"; /* the room's 2.4 GHz WiFi */
-    static const char password[] = "YOUR_WIFI_PASSWORD";
     bento_wifi_connect_params_t params;
     bento_status_t status;
 
     bento_wifi_connect_params_init(&params);
-    params.ssid = ssid;
-    params.ssid_len = (uint32_t)strlen(ssid);
-    params.pass = password;
-    params.pass_len = (uint32_t)strlen(password);
+    params.ssid = SSID;
+    params.ssid_len = (uint32_t)strlen(SSID);
+    params.pass = PASSWORD;
+    params.pass_len = (uint32_t)strlen(PASSWORD);
     params.timeout_ms = 0U; /* the binding's own window */
     params.flags = BENTO_WIFI_F_SAVE_CREDS; /* the binding saves too */
     status = bento_wifi_connect_start(&params);
@@ -178,14 +180,12 @@ static void print_ip(void)
  * or False. It raises OSError only when Wi-Fi cannot start. */
 static bento_status_t connect_broker(uint32_t *client, bool *linked)
 {
-    /* a public broker, ready to test at once */
-    static const char broker[] = "test.mosquitto.org";
     bento_mqtt_config_t config;
     bento_status_t status;
 
     bento_mqtt_config_init(&config);
-    config.host = broker;
-    config.host_len = (uint32_t)strlen(broker);
+    config.host = BROKER;
+    config.host_len = (uint32_t)strlen(BROKER);
     config.port = (uint16_t)BROKER_PORT;
     config.client_id = PLAYER;
     config.client_id_len = (uint32_t)strlen(PLAYER);
