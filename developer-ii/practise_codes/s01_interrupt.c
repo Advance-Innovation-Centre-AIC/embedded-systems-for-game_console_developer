@@ -2,7 +2,7 @@
  * s01_interrupt.c -- Polling vs Interrupt: ปุ่มแบบ "ขัดจังหวะ" + กระพริบไฟแบบไม่บล็อก
  *
  * ใน Dev I เราอ่านปุ่มแบบ polling คือวนถามซ้ำ ๆ แล็บนี้ให้ฮาร์ดแวร์เป็นฝ่าย "สะกิด"
- * เราเองตอนปุ่มถูกกด (interrupt ที่ขอบขาลงของปุ่ม) และกระพริบไฟ LED 0 ทุก 500 ms
+ * เราเองตอนปุ่มถูกกด (ขอบขาลงของปุ่ม) และกระพริบไฟ LED 0 ทุก 500 ms
  * ด้วย software timer (เทียบเวลาเองในลูป ไม่ sleep ยาว) ไฟกระพริบสม่ำเสมอ
  * พร้อมกับการนับปุ่ม โดยไม่ขวางกัน กด Stop เพื่อหยุด (โครงนี้มีช่องให้เติมเอง)
  *
@@ -13,9 +13,8 @@
  *
  * Twin of s01_interrupt.py (embedded-systems-for-game_console_developer/
  * developer-ii/practise_codes/s01_interrupt.py). Style: CLEAN_C.md.
- * C has no interrupt callback into the program (the C API's rule): once the
- * edge is attached it goes into the library's event ring, which the loop
- * reads with bento_machine_pin_poll() and counts one press per falling edge.
+ * C has no Pin.irq on these boards, so the loop polls the button every 5 ms
+ * and calls on_button() once for each falling edge (press) it sees.
  */
 #include <stdbool.h>
 #include <stdint.h>
@@ -23,7 +22,6 @@
 #include <string.h>
 
 #include "bento_gpio.h"
-#include "bento_machine.h"
 #include "bento_runtime.h"
 #include "bento_time.h"
 
@@ -33,8 +31,9 @@ enum {
 };
 
 typedef struct {
-    uint32_t led;    /* ไฟดวงแรกไว้กระพริบเป็นจังหวะ */
-    uint32_t button; /* ปุ่ม USER BTN1 = P7_0 บนบอร์ด */
+    uint32_t led;     /* ไฟดวงแรกไว้กระพริบเป็นจังหวะ */
+    uint32_t button;  /* ปุ่ม USER BTN1 = P7_0 บนบอร์ด */
+    bool was_pressed; /* the button at the last loop, to see the edge */
     int32_t press_count;
     bool led_on;
     uint32_t last_blink;
@@ -50,19 +49,18 @@ static bento_status_t take_led(lab_t *lab)
                : BENTO_E_INVALID_ARGUMENT;
 }
 
-/* ปุ่ม ตั้งเป็นขาเข้า (no pull: the binding's latch is 0) */
-static bento_status_t open_button(lab_t *lab)
+/* ปุ่ม USER BTN1 = button 0; a board without it is refused, as
+ * Pin("USER_BUTTON") raises ValueError. */
+static bento_status_t take_button(lab_t *lab)
 {
-    static const char button_name[] = "USER_BUTTON";
-    bento_machine_pin_cfg_t config;
-    bento_status_t status = bento_machine_pin_open(
-        button_name, (uint32_t)strlen(button_name), &lab->button);
+    bento_status_t status = BENTO_E_INVALID_ARGUMENT;
 
-    if (status == BENTO_OK) {
-        bento_machine_pin_cfg_init(&config);
-        config.mode = BENTO_MACHINE_PIN_IN;
-        config.value = 0;
-        status = bento_machine_pin_config(lab->button, &config);
+    lab->button = 0U;
+    lab->was_pressed = false;
+    if (lab->button < bento_gpio_num_buttons()) {
+        /* a press already held now is no edge, as Pin.irq sees none */
+        status = bento_gpio_button_is_pressed(lab->button,
+                                              &lab->was_pressed);
     }
     return status;
 }
@@ -126,14 +124,15 @@ int main(void)
     (void)memset(&lab, 0, sizeof(lab));
     status = take_led(&lab);
     if (status == BENTO_OK) {
-        status = open_button(&lab);
+        status = take_button(&lab);
     }
     lab.press_count = 0;
     /* "interrupt handler" ทำให้สั้นและเร็วที่สุด ห้ามงานหนัก/หน่วงเวลานาน
      * เติม: เขียนฟังก์ชัน on_button(lab) ที่นับเพิ่มทีละ 1 (lab->press_count += 1)
-     * เติม: ผูกปุ่มที่ขอบขาลง ใช้ bento_machine_pin_irq_enable(lab.button,
-     *       BENTO_MACHINE_PIN_IRQ_FALLING) แล้วในลูปอ่านขอบที่ค้างด้วย
-     *       bento_machine_pin_poll และเรียก on_button ทีละขอบขาลงของปุ่ม */
+     * เติม: "ผูก" handler กับขอบขาลงของปุ่ม: ในลูปอ่านปุ่มด้วย
+     *       bento_gpio_button_is_pressed(lab->button, &pressed) ถ้าตอนนี้กดอยู่แต่
+     *       รอบก่อนยังไม่กด (lab->was_pressed) แปลว่าเพิ่งกด ให้เรียก on_button
+     *       แล้วจำ lab->was_pressed = pressed ไว้ใช้รอบหน้า */
     if (status == BENTO_OK) {
         (void)printf("กดปุ่ม USER BTN1 ได้เลย — ไฟจะกระพริบไปด้วยโดยไม่สะดุด "
                      "(Ctrl+C เพื่อหยุด)\n");
