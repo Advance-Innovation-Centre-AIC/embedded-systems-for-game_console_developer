@@ -18,8 +18,9 @@
  * then a poll until it answers (the C API never blocks): the blanks say
  * which calls. The 15 s window counts milliseconds, not whole seconds.
  * In the BENTO Emulator, MQTT from C is not available yet: the program says
- * so and ends. The note drops ภาษา and บอร์ด from the standard text: as
- * written it is 143 bytes, above the 126 a text may carry.
+ * so, then takes the .py's "broker unreachable" path (print and end). The
+ * note drops ภาษา and บอร์ด from the standard text: as written it is 143
+ * bytes, above the 126 a text may carry.
  */
 #include <inttypes.h>
 #include <stdbool.h>
@@ -215,7 +216,6 @@ static bento_status_t show_emulator_note(void)
         "%s / MQTT from C is not in the BENTO Emulator yet: run it "
         "on a Dev Kit or Eva Kit.\n",
         note);
-    (void)printf("ต่อ broker ไม่ได้\n");
     return status;
 }
 
@@ -227,8 +227,11 @@ static bento_status_t use_broker(void)
     bento_status_t status = connect_broker(&client, &ok);
 
     if (status == BENTO_E_UNSUPPORTED) {
+        /* then on as the .py goes when the broker cannot be reached */
         status = show_emulator_note();
-    } else if ((status == BENTO_OK) && !ok) {
+        ok = false;
+    }
+    if ((status == BENTO_OK) && !ok) {
         (void)printf("ต่อ broker ไม่ได้\n");
     } else if (status == BENTO_OK) {
         (void)printf("ต่อ broker แล้ว\n");
