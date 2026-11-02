@@ -24,9 +24,10 @@ hint  = game.Text("กดจอยซ้าย-ขวา รับของใ�
 
 # ---- เลือก "ขนาดตัวอักษร" ด้วย ui.Label(value=ขนาด) ----
 # value ที่บอร์ดรองรับ: 14 / 16 / 20 / 24 / 28 (เลขยิ่งมาก ตัวยิ่งใหญ่)
-ui.Label("เล็ก 14",  x=120, y=140, color=game.BLUE,   value=14)
-ui.Label("กลาง 20",  x=120, y=180, color=game.BLUE,   value=20)
-ui.Label("ใหญ่ 28",  x=120, y=230, color=game.YELLOW, value=28)
+# ภาษาไทยบนบอร์ดใช้ 20 ขึ้นไปเสมอ (14/16 เล็กเกินจนสระซ้อนอ่านไม่ออก)
+ui.Label("กลาง 20",   x=120, y=140, color=game.BLUE,   value=20)
+ui.Label("ใหญ่ 24",   x=120, y=180, color=game.BLUE,   value=24)
+ui.Label("ใหญ่สุด 28", x=120, y=230, color=game.YELLOW, value=28)
 
 # ---- คำยาก: สระซ้อน/วรรณยุกต์ เฟิร์มแวร์เรียงให้เองทั้งหมด ----
 ui.Label("ปั๊มน้ำ",   x=460, y=150, color=game.PINK,  value=24)

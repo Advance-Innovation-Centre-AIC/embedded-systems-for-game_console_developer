@@ -5,14 +5,14 @@
  * (embedded-systems-for-game_console_developer/developer-i/practise_codes/s04_thai.py).
  *
  * โชว์ข้อความภาษาไทยบนจอจริง หน้าเริ่ม "เกมภาษาไทย" รอกด Start แล้ววางป้าย
- * game.Text ขนาดมาตรฐาน 3 ป้าย กับ ui.Label ที่เลือกขนาดตัวอักษรได้ (14, 20, 28)
+ * game.Text ขนาดมาตรฐาน 3 ป้าย กับ ui.Label ที่เลือกขนาดตัวอักษรได้ (20, 24, 28)
  * และคำยากที่มีสระซ้อน/วรรณยุกต์อีก 2 คำ จากนั้นวิ่งทุกเฟรม กด A = บวกแต้ม
  * ช่องว่าง 2 จุด ("เติม:") ยังเป็น pass จึงยังไม่มีป้ายคำที่ 3 และป้ายคะแนนไม่เปลี่ยน
  * กด Back เพื่อออก
  *
  * Shows Thai text on the game screen: the title "เกมภาษาไทย" waits for
  * START, then three game.Text labels at the standard size, three
- * ui.Label labels at chosen font sizes (14, 20, 28) and two hard words
+ * ui.Label labels at chosen font sizes (20, 24, 28) and two hard words
  * with stacked vowels and tone marks. Then a frame loop: A adds a
  * point. Both blanks are still `pass`, so there is no extra word and
  * the score label never changes. BACK quits.
@@ -139,9 +139,9 @@ static bento_status_t add_texts(thai_game_t *thai)
 static bento_status_t add_sized_labels(thai_game_t *thai)
 {
     static const label_spec_t labels[LABEL_COUNT] = {
-        {"เล็ก 14", 120, 140, BENTO_GAME_BLUE, 14},
-        {"กลาง 20", 120, 180, BENTO_GAME_BLUE, 20},
-        {"ใหญ่ 28", 120, 230, BENTO_GAME_YELLOW, 28},
+        {"กลาง 20", 120, 140, BENTO_GAME_BLUE, 20},
+        {"ใหญ่ 24", 120, 180, BENTO_GAME_BLUE, 24},
+        {"ใหญ่สุด 28", 120, 230, BENTO_GAME_YELLOW, 28},
         {"ปั๊มน้ำ", 460, 150, BENTO_GAME_PINK, 24},
         {"เกี๊ยวกุ้ง", 460, 200, BENTO_GAME_GREEN, 24}};
     bento_status_t status = BENTO_OK;
