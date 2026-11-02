@@ -41,22 +41,29 @@
 #include "bento_random.h"
 #include "bento_runtime.h"
 
-/* The round (แก้ได้). */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
 enum {
     FPS = 30,
     GAME_SECONDS = 30, /* เล่นรอบละกี่วินาที */
     LIVES = 3,         /* ชีวิต = จำนวนยานมุมขวาบน */
     READY_FRAMES = 90, /* ป้าย READY ค้าง 90 เฟรม = 3 วินาที */
-    FRUITS = 3,        /* ผลไม้ที่ตกพร้อมกัน (ชุดหมุนเวียน) */
-    FALL_MIN = 18,     /* ความเร็วตก หน่วย 0.1 px ต่อเฟรม */
+    FRUITS = 3,        /* ผลไม้ที่ตกพร้อมกัน (ชุดหมุนเวียน สร้างครั้งเดียว) */
+    /* ความเร็วตก หน่วย 0.1 px ต่อเฟรม (1.8 ถึง 3.0) */
+    FALL_MIN = 18,
     FALL_MAX = 30,
-    FALL_SCALE = 10,
     BASKET_W = 110,
     BASKET_SPEED = 9,
-    GROUND_Y = 356, /* ผลไม้ตกถึงตรงนี้ = พลาด */
-    SHIP_W = 62,    /* ขนาดภาพ ship กับ snake_food */
-    FRUIT_PX = 16,
-    TOTAL_FRAMES = GAME_SECONDS * FPS,
+    GROUND_Y = 356, /* พื้น (ผลไม้ตกถึงตรงนี้ = พลาด) */
+    /* ขนาดภาพ ship กับ snake_food (ภาพไม่รู้ขนาดตัวเอง) */
+    SHIP_W = 62,
+    FRUIT = 16,
+    TOTAL = GAME_SECONDS * FPS
+};
+/* ---- end of settings ---- */
+
+/* The round. */
+enum {
+    FALL_SCALE = 10,
     COUNTDOWN_SECONDS = 5
 };
 
@@ -467,9 +474,8 @@ static bool fruit_in_basket(const hud_game_t *hud, int32_t i)
     const bento_game_sprite_t *fruit = &hud->fruits[i];
     const bento_game_box_t *basket = &hud->basket;
 
-    return bento_game_hit_rect(fruit->x, fruit->y,
-                               (bento_real_t)FRUIT_PX,
-                               (bento_real_t)FRUIT_PX, basket->x,
+    return bento_game_hit_rect(fruit->x, fruit->y, (bento_real_t)FRUIT,
+                               (bento_real_t)FRUIT, basket->x,
                                basket->y, basket->w, basket->h);
 }
 
@@ -503,7 +509,7 @@ static bento_status_t move_fruit(hud_game_t *hud, int32_t i)
             bento_game_sfx(&hud->game, "eat");
             status = drop(hud, i);
         } else if (fruit->y >
-                   ((bento_real_t)GROUND_Y - (bento_real_t)FRUIT_PX)) {
+                   ((bento_real_t)GROUND_Y - (bento_real_t)FRUIT)) {
             status = lose_life(hud, i);
         } else {
             /* still falling */
@@ -605,7 +611,7 @@ static bento_status_t on_frame(void *user, bool *out_stop)
         int32_t seconds;
 
         status = play_frame(hud, &keys);
-        seconds = seconds_left(hud->frame, TOTAL_FRAMES, FPS);
+        seconds = seconds_left(hud->frame, TOTAL, FPS);
         if (status == BENTO_OK) {
             status = show_hud(hud, seconds);
         }
