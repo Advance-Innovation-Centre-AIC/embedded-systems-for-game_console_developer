@@ -36,31 +36,37 @@
 #include "bento_gpio.h"
 #include "bento_runtime.h"
 
-/* Speeds and the bar (แก้ได้). */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
 enum {
-    BASE_SPEED = 6, /* เฟรมแรกที่แตะจอยได้ 6 + 1 = 7 */
-    MAX_HIGH = 30,  /* A สลับเพดานความเร็วระหว่างสองค่านี้ */
+    /* ความเร็วฐาน (ค่าเดียวกับ s03_box_joystick.py) เฟรมแรกที่แตะจอยได้ 6 + 1 = 7 */
+    BASE_SPEED = 6,
+    PER_BOX = 3,  /* แถบความเร็ว 1 ก้อน = 3 พิกเซลต่อเฟรม (10 ก้อน = 30) */
+    BAR_STEP = 3, /* แถบเปลี่ยนได้เฟรมละไม่เกิน 3 ก้อน (ไม่ส่งข้อความรวดเดียว) */
+    HERO = 40,    /* กล่องกว้าง/สูง 40 px แบบ s03 */
+    AX = 8,       /* กรอบสนาม (ขอบหนา 6 px) */
+    AY = 94,
+    AW = 776,
+    AH = 272,
+    X_MIN = AX + 6,
+    X_MAX = AX + AW - 6 - HERO,
+    Y_MIN = AY + 6,
+    Y_MAX = AY + AH - 6 - HERO
+};
+/* ---- end of settings ---- */
+
+/* Speeds and the bar. */
+enum {
+    MAX_HIGH = 30, /* A สลับเพดานความเร็วระหว่างสองค่านี้ */
     MAX_LOW = 10,
     MAX_CHOICES = 2,
-    PER_BOX = 3,  /* แถบ 1 ก้อน = 3 พิกเซลต่อเฟรม */
-    BAR_STEP = 3, /* แถบเปลี่ยนได้เฟรมละไม่เกิน 3 ก้อน */
     BAR_BOXES = 10,
-    HERO_PX = 40,
     HERO_RADIUS = 8,
     FPS = 30
 };
 
 /* The field: a frame 6 px thick. */
 enum {
-    FIELD_X = 8,
-    FIELD_Y = 94,
-    FIELD_W = 776,
-    FIELD_H = 272,
     EDGE_PX = 6,
-    X_MIN = FIELD_X + EDGE_PX,
-    X_MAX = FIELD_X + FIELD_W - EDGE_PX - (int32_t)HERO_PX,
-    Y_MIN = FIELD_Y + EDGE_PX,
-    Y_MAX = FIELD_Y + FIELD_H - EDGE_PX - (int32_t)HERO_PX,
     EDGE_COUNT = 4
 };
 
@@ -239,10 +245,11 @@ static bento_status_t add_bar(clamp_ramp_t *clamp_ramp)
 static bento_status_t add_edges(clamp_ramp_t *clamp_ramp)
 {
     static const place_t places[EDGE_COUNT] = {
-        {FIELD_X, FIELD_Y, EDGE_PX, FIELD_H},
-        {FIELD_X + FIELD_W - EDGE_PX, FIELD_Y, EDGE_PX, FIELD_H},
-        {FIELD_X, FIELD_Y, FIELD_W, EDGE_PX},
-        {FIELD_X, FIELD_Y + FIELD_H - EDGE_PX, FIELD_W, EDGE_PX}};
+        {AX, AY, EDGE_PX, AH},
+        {(int32_t)AX + (int32_t)AW - (int32_t)EDGE_PX, AY, EDGE_PX, AH},
+        {AX, AY, AW, EDGE_PX},
+        {AX, (int32_t)AY + (int32_t)AH - (int32_t)EDGE_PX, AW,
+         EDGE_PX}};
     int32_t i;
     bento_status_t status = BENTO_OK;
 
@@ -308,9 +315,9 @@ static bento_status_t build_screen(clamp_ramp_t *clamp_ramp)
         clamp_ramp->hero_y = (Y_MIN + Y_MAX) / 2;
         status = bento_game_box_create_styled(
             game, &clamp_ramp->hero, (bento_real_t)clamp_ramp->hero_x,
-            (bento_real_t)clamp_ramp->hero_y, (bento_real_t)HERO_PX,
-            (bento_real_t)HERO_PX, BENTO_GAME_CYAN,
-            BENTO_GAME_BORDER_NONE, HERO_RADIUS, 0);
+            (bento_real_t)clamp_ramp->hero_y, (bento_real_t)HERO,
+            (bento_real_t)HERO, BENTO_GAME_CYAN, BENTO_GAME_BORDER_NONE,
+            HERO_RADIUS, 0);
     }
     return status;
 }
