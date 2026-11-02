@@ -28,6 +28,9 @@
  *   - `raise SystemExit` ends the program with 0;
  *   - the client is closed when Stop ends the program too, which
  *     MicroPython leaves to the firmware.
+ * In the BENTO Emulator, MQTT from C is not available yet: the program
+ * says so, then goes on as the .py does when the broker cannot be
+ * reached.
  */
 #include <stdbool.h>
 #include <stdint.h>
@@ -61,6 +64,15 @@ enum {
     PAYLOAD_BYTES = 40,  /* PLAYER, a colon, any int32_t and the NUL */
     MESSAGE_BYTES = 256, /* the binding keeps 255 bytes of a payload */
     TOPIC_BYTES = 129    /* bento_mqtt keeps 128 bytes of a topic */
+};
+
+/* The Emulator note: one label, Thai at 20 px, wrapped inside the screen. */
+enum {
+    NOTE_X = 16,
+    NOTE_Y = 160,
+    NOTE_W = 760,
+    NOTE_PX = 20,
+    NOTE_COLOR = 0xFFFFFF
 };
 
 /* The newest message of a round, as the binding's one slot keeps it. */
@@ -269,6 +281,33 @@ static bento_status_t listen_scores(uint32_t client)
     return status;
 }
 
+/* The BENTO Emulator's C runtime has no MQTT yet (bento_mqtt answers
+ * BENTO_E_UNSUPPORTED there): say so on screen and on the console. */
+static bento_status_t show_emulator_note(void)
+{
+    static const char note[] = "MQTT จาก C ยังไม่มีใน BENTO Emulator "
+                               "ให้รันบน Dev Kit หรือ Eva Kit";
+    bento_ui_widget_args_t args;
+    bento_ui_id_t label;
+    bento_status_t status;
+
+    bento_ui_widget_args_init(&args);
+    args.text = note;
+    args.text_len = (uint32_t)strlen(note);
+    args.x = NOTE_X;
+    args.y = NOTE_Y;
+    args.w = NOTE_W;
+    args.color = NOTE_COLOR;
+    args.font_px = NOTE_PX;
+    status =
+        bento_ui_label_create(bento_runtime_get_ui(), &args, &label);
+    (void)printf(
+        "%s / MQTT from C is not in the BENTO Emulator yet: run it "
+        "on a Dev Kit or Eva Kit.\n",
+        note);
+    return status;
+}
+
 /* Steps 2 to 4, once Wi-Fi is up: the broker, our score, theirs. */
 static bento_status_t play_online(uint32_t *client)
 {
@@ -277,6 +316,10 @@ static bento_status_t play_online(uint32_t *client)
 
     (void)printf("กำลังต่อ MQTT broker ...\n");
     status = connect_broker(client, &linked);
+    if (status == BENTO_E_UNSUPPORTED) {
+        /* the BENTO Emulator: the note, then the .py's no-broker path */
+        status = show_emulator_note();
+    }
     if ((status == BENTO_OK) && !linked) {
         (void)printf("ต่อ broker ไม่ได้\n");
         status = BENTO_E_CANCELLED; /* raise SystemExit: a normal end */
