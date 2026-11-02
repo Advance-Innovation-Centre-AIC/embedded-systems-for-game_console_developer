@@ -39,7 +39,6 @@ enum {
     STATUS_Y = 370,
     TITLE_PX = 28, /* ตัวใหญ่สุด = หัวเรื่อง */
     LABEL_PX = 20,
-    SMALL_PX = 16,
     LOOP_MS = 50 /* พักสั้น ๆ ไม่ให้ลูป busy เกินจำเป็น */
 };
 
@@ -85,7 +84,7 @@ static bento_status_t add_headings(const menu_t *menu)
     if (status == BENTO_OK) {
         status =
             add_label(menu->ui, "ปรับให้ถูกใจก่อนเริ่มเล่น", subtitle_place,
-                      COLOR_SUBTITLE, SMALL_PX, &label);
+                      COLOR_SUBTITLE, LABEL_PX, &label);
     }
     if (status == BENTO_OK) {
         status = add_label(menu->ui, "ระดับความยาก", level_place,
@@ -162,7 +161,7 @@ static bento_status_t build_menu(menu_t *menu)
     if (status == BENTO_OK) {
         status =
             add_label(menu->ui, "เลือกระดับแล้วกดเริ่มเกม", status_place,
-                      COLOR_STATUS, SMALL_PX, &menu->status_label);
+                      COLOR_STATUS, LABEL_PX, &menu->status_label);
     }
     return status;
 }
