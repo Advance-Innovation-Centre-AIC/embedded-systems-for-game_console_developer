@@ -48,15 +48,20 @@
 #pragma GCC optimize("fp-contract=off")
 #endif
 
-/* The machine and its drum (แก้ได้). */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
 enum {
     FPS = 30,
+    CX = 175, /* จุดกลางและรัศมีของประตูกลม */
+    CY = 200,
+    R = 80,
+    LR = 46 /* รัศมีวงที่ผ้าวิ่ง (อยู่ในถังเสมอ) */
+};
+/* ---- end of settings ---- */
+
+/* The machine and its drum. */
+enum {
     BAND_COUNT = 4,  /* แถบน้ำ */
     CLOTH_COUNT = 3, /* ผ้า */
-    DRUM_X = 175,    /* จุดกลางและรัศมีของประตูกลม */
-    DRUM_Y = 200,
-    DRUM_RADIUS = 80,
-    SWING_RADIUS = 46, /* รัศมีวงที่ผ้าวิ่ง (อยู่ในถังเสมอ) */
     PILE_RADIUS = 52,
     DRUM_EDGE_W = 6,
     WATER_INSET = 14,
@@ -296,12 +301,10 @@ static bento_status_t add_cabinet(washer_t *washer)
     }
     if (status == BENTO_OK) {
         status = bento_game_box_create_styled(
-            &washer->game, &door,
-            (bento_real_t)DRUM_X - (bento_real_t)DRUM_RADIUS,
-            (bento_real_t)DRUM_Y - (bento_real_t)DRUM_RADIUS,
-            (bento_real_t)(2 * DRUM_RADIUS),
-            (bento_real_t)(2 * DRUM_RADIUS), COLOR_DRUM, COLOR_EDGE,
-            DRUM_RADIUS, DRUM_EDGE_W);
+            &washer->game, &door, (bento_real_t)CX - (bento_real_t)R,
+            (bento_real_t)CY - (bento_real_t)R, (bento_real_t)(2 * R),
+            (bento_real_t)(2 * R), COLOR_DRUM, COLOR_EDGE, R,
+            DRUM_EDGE_W);
     }
     return status;
 }
@@ -309,20 +312,20 @@ static bento_status_t add_cabinet(washer_t *washer)
 /* แถบล่างสุดคือแถบที่ 0 กว้างตามโค้งของถัง */
 static bento_status_t add_water(washer_t *washer)
 {
-    const int32_t rim = DRUM_RADIUS - WATER_RIM;
+    const int32_t rim = (int32_t)R - WATER_RIM;
     int32_t i;
     bento_status_t status = BENTO_OK;
 
     for (i = 0; (status == BENTO_OK) && (i < BAND_COUNT); i++) {
         /* ระยะจากจุดกลางถึงกลางแถบ */
-        const int32_t middle = DRUM_RADIUS - WATER_INSET -
+        const int32_t middle = (int32_t)R - WATER_INSET -
                                (i * WATER_BAND_H) - (WATER_BAND_H / 2);
         const int32_t inside = (rim * rim) - (middle * middle);
         const bento_real_t across =
             (bento_real_t)2 * real_sqrt((bento_real_t)inside);
         const int32_t width = (int32_t)across;
-        const int32_t left_x = DRUM_X - (width / 2);
-        const int32_t top_y = (DRUM_Y + middle) - (WATER_BAND_H / 2);
+        const int32_t left_x = CX - (width / 2);
+        const int32_t top_y = (CY + middle) - (WATER_BAND_H / 2);
 
         status = bento_game_box_create_styled(
             &washer->game, &washer->water[i], (bento_real_t)left_x,
@@ -404,9 +407,9 @@ static bento_status_t place(washer_t *washer, bento_game_box_t *cloth,
     const bento_real_t across = (bento_real_t)radius * real_cos(angle);
     const bento_real_t down = (bento_real_t)radius * real_sin(angle);
     const int32_t x =
-        (int32_t)((bento_real_t)DRUM_X + across) - (CLOTH_PX / 2);
+        (int32_t)((bento_real_t)CX + across) - (CLOTH_PX / 2);
     const int32_t y =
-        (int32_t)((bento_real_t)DRUM_Y + down) - (CLOTH_PX / 2);
+        (int32_t)((bento_real_t)CY + down) - (CLOTH_PX / 2);
 
     return bento_game_box_move_to(&washer->game, cloth, (bento_real_t)x,
                                   (bento_real_t)y);
@@ -554,12 +557,12 @@ static bento_status_t move_clothes(washer_t *washer)
             const bento_real_t rock = swing * real_sin(phase);
 
             status = place(washer, &washer->clothes[i],
-                           (PI / (bento_real_t)2) + rock, SWING_RADIUS);
+                           (PI / (bento_real_t)2) + rock, LR);
         } else if (washer->state == STATE_SPIN) {
             const bento_real_t turn = (bento_real_t)i * third_turn;
 
             status = place(washer, &washer->clothes[i],
-                           washer->spin + turn, SWING_RADIUS);
+                           washer->spin + turn, LR);
         } else {
             /* the clothes lie still */
         }
