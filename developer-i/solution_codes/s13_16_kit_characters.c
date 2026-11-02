@@ -38,6 +38,14 @@
 #include "bento_random.h"
 #include "bento_runtime.h"
 
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
+enum {
+    FPS = 30
+};
+/* flappy_full วัด dt จริงด้วย time.ticks_ms · ชุดนี้ใช้ dt คงที่ จะได้ import แค่ bentogame */
+static const bento_real_t DT = (bento_real_t)1.0 / (bento_real_t)FPS;
+/* ---- end of settings ---- */
+
 /* a*b+c is two roundings in MicroPython: no fused multiply-add */
 #if defined(__clang__)
 #pragma STDC FP_CONTRACT OFF
@@ -56,7 +64,6 @@ enum {
 
 /* The show. */
 enum {
-    FPS = 30,
     PIECES = 5,
     COLOR_SPACE = 0x10122C, /* สีอวกาศ (shooter_full.py:67) */
     COLOR_SKY = 0x88C1F5,   /* ฟ้าแถบกลางของ flappy_full.py:35 */
@@ -1161,14 +1168,13 @@ static bento_status_t enter_bird(kit_t *kit)
 static bento_status_t
 play_bird(kit_t *kit, const bento_game_keys_t *keys, bool flap)
 {
-    const bento_real_t frame_s = (bento_real_t)1.0 / (bento_real_t)FPS;
     bird_t *bird = &kit->bird;
     /* read every key before the or: pressed_once must see every frame */
     const bool up =
         bento_game_pressed_once(&kit->game, BENTO_GAME_KEY_UP, keys);
     char text[SAY_CHARS];
     bool alive = true;
-    bento_status_t status = step_bird(kit, flap || up, frame_s, &alive);
+    bento_status_t status = step_bird(kit, flap || up, DT, &alive);
 
     if ((status == BENTO_OK) && !alive) {
         status = reset_bird(kit);
