@@ -34,20 +34,27 @@
 #include "bento_gpio.h"
 #include "bento_runtime.h"
 
-/* The pool and its lockers (แก้ได้). */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
 enum {
-    POOL = 8, /* ของ 1 ตัวกิน 2 ชิ้น คือตัวมันกับช่องของมัน */
-    SPEED_COUNT = 3,
+    /* ขนาดชุด (งบวิดเจ็ตจำกัด: ของ 1 ตัวกิน 2 ชิ้น คือตัวมันกับช่องของมัน) */
+    POOL = 8,
     LOCK_X0 = 34,
     LOCK_Y = 316,
     LOCK_W = 44,
     LOCK_H = 30,
     LOCK_GAP = 54,
-    LOCK_RADIUS = 4,
     LAUNCH_Y = LOCK_Y - 22, /* จุดปล่อยของ เหนือช่องของตัวเอง */
+    HUD_X = 500
+};
+/* ---- end of settings ---- */
+
+/* The pool and its lockers. */
+enum {
+    SPEED_COUNT = 3,
+    LOCK_RADIUS = 4,
     CURSOR_GAP = 5,
     CURSOR_H = 4,
-    CURSOR_Y = LOCK_Y + LOCK_H + CURSOR_GAP,
+    CURSOR_Y = LOCK_Y + LOCK_H + (int32_t)CURSOR_GAP,
     PARKED_Y = -20, /* above this an item is free */
     ITEM_PARK = -100,
     ENEMY_W = 16,
@@ -58,7 +65,6 @@ enum {
 
 /* The texts and the return note. */
 enum {
-    HUD_X = 500,
     TITLE_Y = 20,
     COUNT_Y = 58,
     MESSAGE_Y = 96,
