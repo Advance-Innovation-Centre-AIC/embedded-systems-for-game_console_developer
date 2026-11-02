@@ -41,11 +41,12 @@ enum {
 /* แต่ละสถานะ = LED หนึ่งดวง: GREEN -> LED2 (1), YELLOW -> LED1 (0),
  * RED -> RGB_RED (2) */
 static const uint32_t LAMP[STATES] = {1U, 0U, 2U};
-static const char *const NAME[STATES] = {"GREEN", "YELLOW", "RED"};
 
 /* ติดดวงที่ตรงกับ state ปัจจุบัน ดับดวงที่เหลือให้หมด */
 static bento_status_t show(uint32_t state)
 {
+    static const char *const state_names[STATES] = {"GREEN", "YELLOW",
+                                                    "RED"};
     bento_status_t status = BENTO_OK;
     uint32_t i;
 
@@ -54,7 +55,7 @@ static bento_status_t show(uint32_t state)
                               : bento_gpio_led_off(LAMP[i]);
     }
     if (status == BENTO_OK) {
-        (void)printf("STATE = %s\n", NAME[state]);
+        (void)printf("STATE = %s\n", state_names[state]);
     }
     return status;
 }

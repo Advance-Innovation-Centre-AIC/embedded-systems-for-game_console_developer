@@ -92,11 +92,8 @@ enum {
     TANK_EDGE = 0x8899AA
 };
 
-/* น้ำเข้าตอนเริ่ม และสูงสุด · น้ำออกคงที่ (% ต่อเฟรม) · ระดับน้ำตอนเริ่ม (%) */
-static const bento_real_t IN_START = (bento_real_t)0.40;
-static const bento_real_t IN_MAX = (bento_real_t)1.00;
+/* น้ำออกคงที่ (% ต่อเฟรม) */
 static const bento_real_t OUT = (bento_real_t)0.30;
-static const bento_real_t LEVEL_START = (bento_real_t)30.0;
 static const bento_real_t FULL = (bento_real_t)100.0;
 
 typedef struct {
@@ -289,6 +286,8 @@ static bento_status_t add_equations(integrate_t *state)
 static bento_status_t add_lane(integrate_t *state)
 {
     char text[TEXT_BYTES];
+    const int32_t tick_y = LANE_Y + TICK_DY;
+    const int32_t ball_y = LANE_Y + BALL_DY;
     bento_game_box_t lane;
     bento_status_t status;
     uint32_t i;
@@ -301,13 +300,13 @@ static bento_status_t add_lane(integrate_t *state)
     for (i = 0U; (status == BENTO_OK) && (i < (uint32_t)TICKS); i++) {
         status = bento_game_box_create(
             &state->game, &state->ticks[i], (bento_real_t)TICK_X,
-            (bento_real_t)(LANE_Y + TICK_DY), (bento_real_t)TICK_W,
+            (bento_real_t)tick_y, (bento_real_t)TICK_W,
             (bento_real_t)TICK_H, BENTO_GAME_YELLOW);
     }
     if (status == BENTO_OK) {
-        status = bento_game_sprite_create(
-            &state->game, &state->ball, "ball", (bento_real_t)X_LO,
-            (bento_real_t)(LANE_Y + BALL_DY));
+        status = bento_game_sprite_create(&state->game, &state->ball,
+                                          "ball", (bento_real_t)X_LO,
+                                          (bento_real_t)ball_y);
     }
     (void)snprintf(text, sizeof(text), "ขีดเหลือง = ลูกอยู่ตรงนี้ทุก %d เฟรม",
                    TRAIL_EVERY);
@@ -320,6 +319,8 @@ static bento_status_t add_lane(integrate_t *state)
 /* The tank, its ten hidden blocks and the key caption. */
 static bento_status_t add_tank(integrate_t *state)
 {
+    const int32_t seg_x = TANK_X + SEG_INSET;
+    const int32_t seg_h = SEG_H - SEG_GAP;
     bento_game_box_t tank;
     bento_status_t status;
     int32_t i;
@@ -334,10 +335,9 @@ static bento_status_t add_tank(integrate_t *state)
                             ((i + 1) * SEG_H) + (SEG_GAP / 2);
 
         status = bento_game_box_create(
-            &state->game, &state->segments[i],
-            (bento_real_t)(TANK_X + SEG_INSET), (bento_real_t)top,
-            (bento_real_t)(TANK_W - (2 * SEG_INSET)),
-            (bento_real_t)(SEG_H - SEG_GAP), BENTO_GAME_BLUE);
+            &state->game, &state->segments[i], (bento_real_t)seg_x,
+            (bento_real_t)top, (bento_real_t)(TANK_W - (2 * SEG_INSET)),
+            (bento_real_t)seg_h, BENTO_GAME_BLUE);
         if (status == BENTO_OK) {
             status =
                 bento_game_box_hide(&state->game, &state->segments[i]);
@@ -353,29 +353,35 @@ static bento_status_t add_tank(integrate_t *state)
 /* x, v, level and inflow as they start (and as A starts them again). */
 static void restart(integrate_t *state)
 {
+    /* น้ำเข้าตอนเริ่ม (% ต่อเฟรม) · ระดับน้ำตอนเริ่ม (%) */
+    static const bento_real_t in_start = (bento_real_t)0.40;
+    static const bento_real_t level_start = (bento_real_t)30.0;
+
     state->x = X_LO;
     state->v = V_START;
-    state->level = LEVEL_START;
-    state->inflow = IN_START;
+    state->level = level_start;
+    state->inflow = in_start;
 }
 
 /* เข้า: ปุ่มเปลี่ยน "ที่เปลี่ยนต่อเฟรม" ไม่ได้ย้ายลูกหรือเติมน้ำตรง ๆ */
 static void read_keys(integrate_t *state, const bento_game_keys_t *keys)
 {
+    static const bento_real_t in_max =
+        (bento_real_t)1.00; /* น้ำเข้าสูงสุด */
     const bento_real_t step = (bento_real_t)0.10;
     bento_game_t *game = &state->game;
 
     if (bento_game_pressed_once(game, BENTO_GAME_KEY_RIGHT, keys)) {
-        state->v = (state->v + 1 < V_MAX) ? state->v + 1 : V_MAX;
+        state->v = ((state->v + 1) < V_MAX) ? (state->v + 1) : V_MAX;
     }
     if (bento_game_pressed_once(game, BENTO_GAME_KEY_LEFT, keys)) {
-        state->v = (state->v - 1 > -V_MAX) ? state->v - 1 : -V_MAX;
+        state->v = ((state->v - 1) > -V_MAX) ? (state->v - 1) : -V_MAX;
     }
     if (bento_game_pressed_once(game, BENTO_GAME_KEY_UP, keys)) {
         const bento_real_t more = state->inflow + step;
 
         state->inflow =
-            round_hundredths((more < IN_MAX) ? more : IN_MAX);
+            round_hundredths((more < in_max) ? more : in_max);
     }
     if (bento_game_pressed_once(game, BENTO_GAME_KEY_DOWN, keys)) {
         const bento_real_t less = state->inflow - step;

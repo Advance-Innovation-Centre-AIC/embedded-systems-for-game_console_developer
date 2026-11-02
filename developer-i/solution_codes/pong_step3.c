@@ -62,15 +62,6 @@ enum { /* frames per second */
     FPS = 60
 };
 
-static const bento_real_t ACCEL = (bento_real_t)1.5;
-static const bento_real_t MAX_SPEED = (bento_real_t)12.0;
-static const bento_real_t FRICTION = (bento_real_t)0.78;
-static const bento_real_t START_VX = (bento_real_t)-6.2;
-static const bento_real_t START_VY = (bento_real_t)3.4;
-static const bento_real_t SPEEDUP = (bento_real_t)0.35;
-static const bento_real_t BALL_CAP = (bento_real_t)14.0;
-static const bento_real_t SPIN = (bento_real_t)0.28;
-
 typedef struct {
     bento_game_t game;
     bento_game_box_t player_paddle;
@@ -112,18 +103,21 @@ static bento_real_t real_abs(bento_real_t value)
 static bento_status_t move_player(pong_t *pong,
                                   const bento_game_keys_t *keys)
 {
+    static const bento_real_t accel = (bento_real_t)1.5;
+    static const bento_real_t max_speed = (bento_real_t)12.0;
+    static const bento_real_t friction = (bento_real_t)0.78;
     const bento_real_t lowest_y =
         (bento_real_t)(pong->game.height - PADDLE_H);
 
     if (keys->up && !keys->down) {
-        pong->player_speed -= ACCEL;
+        pong->player_speed -= accel;
     } else if (keys->down && !keys->up) {
-        pong->player_speed += ACCEL;
+        pong->player_speed += accel;
     } else {
-        pong->player_speed *= FRICTION;
+        pong->player_speed *= friction;
     }
     pong->player_speed =
-        real_max(-MAX_SPEED, real_min(MAX_SPEED, pong->player_speed));
+        real_max(-max_speed, real_min(max_speed, pong->player_speed));
     pong->player_y = real_max(
         (bento_real_t)0,
         real_min(lowest_y, pong->player_y + pong->player_speed));
@@ -151,6 +145,9 @@ static bento_status_t move_ball(pong_t *pong)
  * of the contact point, with the paddle's spin */
 static void hit_back(pong_t *pong)
 {
+    static const bento_real_t speedup = (bento_real_t)0.35;
+    static const bento_real_t ball_cap = (bento_real_t)14.0;
+    static const bento_real_t spin_factor = (bento_real_t)0.28;
     /* the contact angle: ball_vy per unit of hit_offset */
     const bento_real_t contact_angle = (bento_real_t)2.0;
     const bento_real_t half_ball =
@@ -166,9 +163,9 @@ static void hit_back(pong_t *pong)
              (pong->player_y + half_paddle)) /
             half_paddle;
         const bento_real_t angle = hit_offset * contact_angle;
-        const bento_real_t spin = pong->player_speed * SPIN;
+        const bento_real_t spin = pong->player_speed * spin_factor;
 
-        pong->ball_vx = real_min(-pong->ball_vx + SPEEDUP, BALL_CAP);
+        pong->ball_vx = real_min(-pong->ball_vx + speedup, ball_cap);
         pong->ball_vy += angle;
         pong->ball_vy += spin;
         bento_game_sfx(&pong->game, "paddle");
@@ -234,6 +231,8 @@ static void report_joystick(const bento_game_t *game)
 /* the paddle, the ball and the caption, then the starting numbers */
 static bento_status_t build_court(pong_t *pong)
 {
+    static const bento_real_t start_vx = (bento_real_t)-6.2;
+    static const bento_real_t start_vy = (bento_real_t)3.4;
     bento_game_t *game = &pong->game;
     const int32_t mid_x = game->width / 2;
     const int32_t mid_y = game->height / 2;
@@ -257,8 +256,8 @@ static bento_status_t build_court(pong_t *pong)
     }
     pong->ball_x = (bento_real_t)mid_x;
     pong->ball_y = (bento_real_t)mid_y;
-    pong->ball_vx = START_VX; /* served towards us */
-    pong->ball_vy = START_VY;
+    pong->ball_vx = start_vx; /* served towards us */
+    pong->ball_vy = start_vy;
     pong->player_y = (bento_real_t)pong->paddle_start_y;
     pong->player_speed = (bento_real_t)0.0;
     return status;

@@ -278,9 +278,11 @@ static bento_status_t add_clock(frame_timer_t *timer)
             0);
     }
     if (status == BENTO_OK) {
+        const int32_t bar_x = PANEL_X + BAR_INSET;
+        const int32_t bar_y = FRAME_Y + BAR_INSET;
+
         status = bento_game_box_create(
-            game, &timer->bar, (bento_real_t)(PANEL_X + BAR_INSET),
-            (bento_real_t)(FRAME_Y + BAR_INSET),
+            game, &timer->bar, (bento_real_t)bar_x, (bento_real_t)bar_y,
             (bento_real_t)(BAR_W - (2 * BAR_INSET)),
             (bento_real_t)BAR_H, BENTO_GAME_GREEN);
     }
@@ -372,9 +374,10 @@ static void record_shot(frame_timer_t *timer)
 static bento_status_t launch_bullet(frame_timer_t *timer,
                                     bento_game_box_t *bullet)
 {
+    const int32_t bullet_y = SHIP_Y - BULLET_H;
     bento_status_t status = bento_game_box_move_to(
         &timer->game, bullet, (bento_real_t)(timer->ship_x + GUN_X),
-        (bento_real_t)(SHIP_Y - BULLET_H));
+        (bento_real_t)bullet_y);
 
     if (status == BENTO_OK) {
         status = bento_game_box_show(&timer->game, bullet);

@@ -77,13 +77,9 @@ enum {
     SLIDE_Y = 62
 };
 
-static const bento_real_t ACCEL = (bento_real_t)1.4;
 static const bento_real_t VMAX = (bento_real_t)13.0;
-static const bento_real_t STOP_SPEED = (bento_real_t)0.2;
 static const bento_real_t FRICTIONS[MODES] = {
     (bento_real_t)0.95, (bento_real_t)0.78, (bento_real_t)0.30};
-static const char *const FEELS[MODES] = {"ลื่นเหมือนน้ำแข็ง", "พอดีแบบ Pong",
-                                         "หนืดเหมือนโคลน"};
 /* สีพื้น: น้ำแข็ง · ปกติ · โคลน */
 static const uint32_t FLOORS[MODES] = {0xA8E6FFU, 0x8899AAU, 0x8B5A2BU};
 
@@ -133,10 +129,11 @@ static int32_t absolute_int(int32_t value)
 static bento_real_t next_speed(bento_real_t speed, int32_t push,
                                bento_real_t friction)
 {
+    static const bento_real_t accel = (bento_real_t)1.4;
     bento_real_t result = speed;
 
     if (push != 0) {
-        result += (bento_real_t)push * ACCEL; /* กดค้าง -> เร่ง */
+        result += (bento_real_t)push * accel; /* กดค้าง -> เร่ง */
     } else {
         result *= friction; /* ปล่อย -> หน่วง */
     }
@@ -155,7 +152,8 @@ static int32_t bar_level(bento_real_t speed)
     const bento_real_t half = (bento_real_t)0.5;
     const bento_real_t share = absolute(speed) / VMAX;
     const bento_real_t blocks = share * (bento_real_t)SEGMENTS;
-    const int32_t count = (int32_t)(blocks + half);
+    const bento_real_t rounded = blocks + half;
+    const int32_t count = (int32_t)rounded;
 
     return (speed < (bento_real_t)0) ? -count : count;
 }
@@ -238,6 +236,7 @@ static bento_status_t add_texts(slide_game_t *slide_game)
 static bento_status_t add_floor_and_ship(slide_game_t *slide_game)
 {
     bento_game_t *game = &slide_game->game;
+    const int32_t flag_y = FLOOR_Y - FLAG_H;
     bento_status_t status = bento_game_box_create(
         game, &slide_game->floor, (bento_real_t)0,
         (bento_real_t)FLOOR_Y, (bento_real_t)BENTO_GAME_WIDTH,
@@ -247,7 +246,7 @@ static bento_status_t add_floor_and_ship(slide_game_t *slide_game)
         /* ธงเหลือง = จุดที่เพิ่งปล่อยจอย */
         status = bento_game_box_create(
             game, &slide_game->flag, (bento_real_t)FLAG_PARK_X,
-            (bento_real_t)(FLOOR_Y - FLAG_H), (bento_real_t)FLAG_W,
+            (bento_real_t)flag_y, (bento_real_t)FLAG_W,
             (bento_real_t)FLAG_H, BENTO_GAME_YELLOW);
     }
     if (status == BENTO_OK) {
@@ -297,6 +296,7 @@ static bento_status_t add_bar_labels(slide_game_t *slide_game)
 {
     bento_game_t *game = &slide_game->game;
     const int32_t label_y = BAR_Y + LABEL_DROP;
+    const int32_t zero_line_y = BAR_Y - ZERO_LINE_RISE;
     bento_game_box_t zero_line;
     bento_game_text_t low_label;
     bento_game_text_t high_label;
@@ -308,9 +308,8 @@ static bento_status_t add_bar_labels(slide_game_t *slide_game)
     bento_game_text_init(&high_label);
     status = bento_game_box_create(
         game, &zero_line, (bento_real_t)ZERO_LINE_X,
-        (bento_real_t)(BAR_Y - ZERO_LINE_RISE),
-        (bento_real_t)ZERO_LINE_W, (bento_real_t)ZERO_LINE_H,
-        BENTO_GAME_WHITE);
+        (bento_real_t)zero_line_y, (bento_real_t)ZERO_LINE_W,
+        (bento_real_t)ZERO_LINE_H, BENTO_GAME_WHITE);
     (void)snprintf(text, sizeof(text), "-%" PRId32, (int32_t)VMAX);
     if (status == BENTO_OK) {
         status =
@@ -335,6 +334,8 @@ static bento_status_t add_bar_labels(slide_game_t *slide_game)
 
 static bento_status_t set_mode(slide_game_t *slide_game, int32_t mode)
 {
+    static const char *const feels[MODES] = {
+        "ลื่นเหมือนน้ำแข็ง", "พอดีแบบ Pong", "หนืดเหมือนโคลน"};
     char friction_text[BENTO_FMT_BUF_SIZE];
     char text[TEXT_CHARS];
     bento_status_t status;
@@ -342,7 +343,7 @@ static bento_status_t set_mode(slide_game_t *slide_game, int32_t mode)
     format_real(friction_text, (uint32_t)sizeof(friction_text),
                 FRICTIONS[mode], 2, false);
     (void)snprintf(text, sizeof(text), "f = %s   %s   (A = เปลี่ยน)",
-                   friction_text, FEELS[mode]);
+                   friction_text, feels[mode]);
     status = bento_game_text_set(&slide_game->game,
                                  &slide_game->feel_text, text);
     if (status == BENTO_OK) {
@@ -374,11 +375,12 @@ static bento_status_t build_screen(slide_game_t *slide_game)
 /* คิด: ปุ่มเปลี่ยน "ความเร็ว" แล้วความเร็วค่อยเปลี่ยนตำแหน่ง */
 static bento_status_t steer(slide_game_t *slide_game, int32_t push)
 {
+    static const bento_real_t stop_speed = (bento_real_t)0.2;
     const bento_real_t friction = FRICTIONS[slide_game->mode];
     bento_status_t status = BENTO_OK;
 
     slide_game->speed = next_speed(slide_game->speed, push, friction);
-    if ((push == 0) && (absolute(slide_game->speed) < STOP_SPEED)) {
+    if ((push == 0) && (absolute(slide_game->speed) < stop_speed)) {
         slide_game->speed = (bento_real_t)0.0;
     }
     if ((push == 0) && (slide_game->prev_push != 0) &&

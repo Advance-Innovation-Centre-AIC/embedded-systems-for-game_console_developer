@@ -58,9 +58,9 @@ enum {
     FIELD_H = 272,
     EDGE_PX = 6,
     X_MIN = FIELD_X + EDGE_PX,
-    X_MAX = FIELD_X + FIELD_W - EDGE_PX - HERO_PX,
+    X_MAX = FIELD_X + FIELD_W - EDGE_PX - (int32_t)HERO_PX,
     Y_MIN = FIELD_Y + EDGE_PX,
-    Y_MAX = FIELD_Y + FIELD_H - EDGE_PX - HERO_PX,
+    Y_MAX = FIELD_Y + FIELD_H - EDGE_PX - (int32_t)HERO_PX,
     EDGE_COUNT = 4
 };
 
@@ -220,7 +220,8 @@ static bento_status_t add_bar(clamp_ramp_t *clamp_ramp)
     bento_game_box_init(&track);
     status = bento_game_box_create_styled(
         game, &track, (bento_real_t)TRACK_X, (bento_real_t)TRACK_Y,
-        (bento_real_t)((BAR_BOXES * BAR_GAP_PX) + TRACK_PAD_PX),
+        (bento_real_t)(((int32_t)BAR_BOXES * BAR_GAP_PX) +
+                       TRACK_PAD_PX),
         (bento_real_t)TRACK_H, COLOR_TRACK, COLOR_DIM, 1, 0);
     for (i = 0; (status == BENTO_OK) && (i < BAR_BOXES); i++) {
         status = bento_game_box_create(
@@ -317,9 +318,10 @@ static bento_status_t build_screen(clamp_ramp_t *clamp_ramp)
 static bento_status_t set_max(clamp_ramp_t *clamp_ramp)
 {
     const int32_t top = max_speed_of(clamp_ramp->max_choice);
-    /* floor division on ints, as Python's top * 34 // PER_BOX */
+    /* floor division on ints (top > 0), as Python's floor division of
+     * top * 34 by PER_BOX */
     const int32_t tick_x =
-        (BAR_X + ((top * BAR_GAP_PX) / PER_BOX)) - CEILING_W;
+        (BAR_X + ((top * BAR_GAP_PX) / (int32_t)PER_BOX)) - CEILING_W;
     char text[MAX_CHARS];
     bento_status_t status;
 

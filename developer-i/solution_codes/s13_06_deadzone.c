@@ -102,8 +102,6 @@ enum {
 /* Lamp i shows out = 1 - i: +1 OPEN, 0 HOLD, -1 CLOSE. */
 static const char *const MEANING[LAMP_COUNT] = {"OPEN", "HOLD",
                                                 "CLOSE"};
-static const uint32_t LAMP_ON[LAMP_COUNT] = {
-    BENTO_GAME_GREEN, BENTO_GAME_CYAN, BENTO_GAME_ORANGE};
 
 typedef struct {
     bento_game_t game;
@@ -161,7 +159,9 @@ static void format_signed(char *text, uint32_t size, int32_t value)
 
 static uint32_t lamp_of(int32_t out)
 {
-    return (uint32_t)(1 - out);
+    const int32_t lamp = 1 - out;
+
+    return (uint32_t)lamp;
 }
 
 static bool on_reterminal(void)
@@ -203,6 +203,7 @@ static bento_status_t add_text(bento_game_t *game, const char *text,
 static bento_status_t add_field(deadzone_t *deadzone)
 {
     bento_game_t *game = &deadzone->game;
+    const int32_t field_h = FIELD_BOTTOM - FIELD_TOP;
     bento_game_box_t field;
     bento_status_t status = add_text(game, "TARGET", TARGET_LABEL_X,
                                      LABEL_Y, BENTO_GAME_YELLOW);
@@ -216,8 +217,7 @@ static bento_status_t add_field(deadzone_t *deadzone)
         status = bento_game_box_create_styled(
             game, &field, (bento_real_t)FIELD_X,
             (bento_real_t)FIELD_TOP, (bento_real_t)FIELD_W,
-            (bento_real_t)(FIELD_BOTTOM - FIELD_TOP), COLOR_FIELD,
-            COLOR_FIELD_EDGE, 1, 1);
+            (bento_real_t)field_h, COLOR_FIELD, COLOR_FIELD_EDGE, 1, 1);
     }
     if (status == BENTO_OK) {
         /* the target line at the ball's centre */
@@ -336,8 +336,10 @@ static bento_status_t build_screen(deadzone_t *deadzone)
 static void read_keys(deadzone_t *deadzone,
                       const bento_game_keys_t *keys)
 {
-    const bento_real_t half_paddle = (bento_real_t)PADDLE_H / 2;
-    const bento_real_t half_ball = (bento_real_t)BALL_PX / 2;
+    const bento_real_t half_paddle =
+        (bento_real_t)PADDLE_H / (bento_real_t)2;
+    const bento_real_t half_ball =
+        (bento_real_t)BALL_PX / (bento_real_t)2;
 
     if (keys->up) {
         const bento_real_t highest =
@@ -407,9 +409,11 @@ static bento_status_t show_ball(deadzone_t *deadzone)
             game, &deadzone->ball, (bento_real_t)BALL_X,
             (bento_real_t)(int32_t)deadzone->ball_y);
         if (status == BENTO_OK) {
-            status = bento_game_box_move_to(
-                game, &deadzone->line, (bento_real_t)BALL_X,
-                (bento_real_t)(centre_y - 1));
+            const int32_t line_y = centre_y - 1;
+
+            status = bento_game_box_move_to(game, &deadzone->line,
+                                            (bento_real_t)BALL_X,
+                                            (bento_real_t)line_y);
         }
         if (status == BENTO_OK) {
             status = bento_game_box_move_to(
@@ -485,6 +489,8 @@ static bento_status_t show_error(deadzone_t *deadzone,
 
 static bento_status_t show_out(deadzone_t *deadzone, int32_t out)
 {
+    static const uint32_t lamp_on[LAMP_COUNT] = {
+        BENTO_GAME_GREEN, BENTO_GAME_CYAN, BENTO_GAME_ORANGE};
     bento_game_t *game = &deadzone->game;
     char sign[TEXT_CHARS];
     char text[TEXT_CHARS];
@@ -499,7 +505,7 @@ static bento_status_t show_out(deadzone_t *deadzone, int32_t out)
         if (status == BENTO_OK) {
             status = bento_game_box_set_color(
                 game, &deadzone->lamps[lamp_of(out)],
-                LAMP_ON[lamp_of(out)]);
+                lamp_on[lamp_of(out)]);
         }
         format_signed(sign, (uint32_t)sizeof(sign), out);
         (void)snprintf(text, sizeof(text), "OUT = %s   %s", sign,
