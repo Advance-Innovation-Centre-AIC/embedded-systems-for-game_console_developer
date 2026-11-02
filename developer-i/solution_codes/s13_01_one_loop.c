@@ -36,30 +36,29 @@
 #include "bento_gpio.h"
 #include "bento_runtime.h"
 
-/* ---- 1) ตั้งค่า (แก้ได้) ---- */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
 enum {
     FPS = 30, /* เฟรมต่อวินาที (game.run เรียก on_frame กี่ครั้งต่อวินาที) */
     STEP = 6, /* ยานขยับกี่พิกเซลต่อเฟรมเมื่อกดจอย */
     LAMP_FRAMES = 8, /* ไฟเสียงติดค้างกี่เฟรมหลังโน้ตดัง (นับเฟรม ไม่ใช้ sleep) */
+    AREA_X = 8,      /* สนามที่ยานวิ่งได้ */
+    AREA_Y = 74,
+    AREA_W = 776,
+    AREA_H = 290,
+    SHIP_W = 62, /* ขนาดภาพ ship */
+    SHIP_H = 28,
+    X_MIN = AREA_X + 4,
+    X_MAX = AREA_X + AREA_W - SHIP_W - 4,
+    Y_MIN = AREA_Y + 4,
+    Y_MAX = AREA_Y + AREA_H - SHIP_H - 4
+};
+/* ---- end of settings ---- */
+
+enum {
     KEY_COUNT = 8,
     COLUMNS = 3,         /* เข้า · คิด · ออก */
     TONE_VELOCITY = 100, /* tone()'s default */
     TONE_MS = 120
-};
-
-/* สนามที่ยานวิ่งได้ และขนาดภาพ ship */
-enum {
-    AREA_X = 8,
-    AREA_Y = 74,
-    AREA_W = 776,
-    AREA_H = 290,
-    SHIP_W = 62,
-    SHIP_H = 28,
-    MARGIN = 4,
-    X_MIN = AREA_X + MARGIN,
-    X_MAX = AREA_X + AREA_W - SHIP_W - MARGIN,
-    Y_MIN = AREA_Y + MARGIN,
-    Y_MAX = AREA_Y + AREA_H - SHIP_H - MARGIN
 };
 
 /* The three panels on top, the sound lamp, and their texts. */
