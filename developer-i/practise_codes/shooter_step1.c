@@ -24,11 +24,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "bento_runtime.h"
-
 #include "bento_fmt.h"
 #include "bento_game.h"
 #include "bento_gpio.h"
+#include "bento_runtime.h"
 
 enum {
     FPS = 30,
@@ -61,7 +60,8 @@ static bool on_reterminal(void)
 #endif
 
     bento_gpio_board_info_init(&info);
-    if ((bento_gpio_board_info(&info) == BENTO_OK) && (info.name != NULL)) {
+    if ((bento_gpio_board_info(&info) == BENTO_OK) &&
+        (info.name != NULL)) {
         answer = (strcmp(info.name, "Seeed reTerminal") == 0);
     }
     return answer;
@@ -79,7 +79,8 @@ static void report_joystick(const bento_game_t *game)
 static bento_status_t on_frame(void *user, bool *out_stop)
 {
     (void)user;
-    (void)out_stop;
+    /* a still picture never ends the game by itself */
+    *out_stop = false;
     return BENTO_OK; /* ยังไม่มี logic ภาพนิ่งก่อน */
 }
 
@@ -90,7 +91,8 @@ int main(void)
     bento_status_t status;
 
     (void)memset(shooter, 0, sizeof(*shooter));
-    bento_game_init(&shooter->game, bento_runtime_get_ui(), bento_runtime_is_running);
+    bento_game_init(&shooter->game, bento_runtime_get_ui(),
+                    bento_runtime_is_running);
     /* หน้าเริ่ม: Start=เล่น Back=ออก (ทำ start ให้ในตัว) */
     status = bento_game_title(&shooter->game, "SHOOTER", NULL, &quit);
     report_joystick(&shooter->game);
@@ -112,7 +114,8 @@ int main(void)
         bool finished = false;
 
         /* Back = ออก / Start = พักเกม (เอนจินจัดการเอง) */
-        status = bento_game_run(&shooter->game, on_frame, NULL, FPS, &finished);
+        status = bento_game_run(&shooter->game, on_frame, NULL, FPS,
+                                &finished);
     }
     return (status == BENTO_E_CANCELLED) ? 0 : (int)status;
 }

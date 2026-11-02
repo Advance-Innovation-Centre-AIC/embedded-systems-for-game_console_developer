@@ -30,11 +30,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "bento_runtime.h"
-
 #include "bento_fmt.h"
 #include "bento_game.h"
 #include "bento_gpio.h"
+#include "bento_runtime.h"
 
 /* The ship, the HUD and the frame rate. */
 enum {
@@ -45,15 +44,17 @@ enum {
     SHIP_H = 24,
     HUD_X = 10,
     HUD_Y = 8,
-    START_LIVES = 3 /* score กับ lives ยังไม่ใช้ในคาบนี้ (คาบ 12 ใช้นับคะแนน/ชีวิต) */
+    START_LIVES =
+        3 /* score กับ lives ยังไม่ใช้ในคาบนี้ (คาบ 12 ใช้นับคะแนน/ชีวิต) */
 };
 
 /* The bullet pool. */
 enum {
-    MAX_BULLETS = 6, /* ขนาดชุดหมุนเวียน (เกมเต็มใช้ 4: shooter_full.py:30) */
+    MAX_BULLETS =
+        6, /* ขนาดชุดหมุนเวียน (เกมเต็มใช้ 4: shooter_full.py:30) */
     BULLET_W = 6,
     BULLET_H = 14,
-    PARKED_Y = -50, /* จอดรอเหนือจอ */
+    PARKED_Y = -50,   /* จอดรอเหนือจอ */
     FREE_LINE_Y = -20 /* ว่าง ⇔ y < -20 */
 };
 
@@ -85,7 +86,8 @@ static bool on_reterminal(void)
 #endif
 
     bento_gpio_board_info_init(&info);
-    if ((bento_gpio_board_info(&info) == BENTO_OK) && (info.name != NULL)) {
+    if ((bento_gpio_board_info(&info) == BENTO_OK) &&
+        (info.name != NULL)) {
         answer = (strcmp(info.name, "Seeed reTerminal") == 0);
     }
     return answer;
@@ -102,8 +104,9 @@ static void report_joystick(const bento_game_t *game)
 static bento_status_t add_ship_and_hud(shooter_t *shooter)
 {
     bento_status_t status = bento_game_box_create(
-        &shooter->game, &shooter->ship, (bento_real_t)SHIP_X, (bento_real_t)SHIP_Y,
-        (bento_real_t)SHIP_W, (bento_real_t)SHIP_H, BENTO_GAME_GREEN);
+        &shooter->game, &shooter->ship, (bento_real_t)SHIP_X,
+        (bento_real_t)SHIP_Y, (bento_real_t)SHIP_W,
+        (bento_real_t)SHIP_H, BENTO_GAME_GREEN);
 
     shooter->ship_x = (bento_real_t)SHIP_X;
     shooter->ship_speed = (bento_real_t)0.0;
@@ -111,8 +114,9 @@ static bento_status_t add_ship_and_hud(shooter_t *shooter)
     shooter->score = 0;
     shooter->lives = START_LIVES;
     if (status == BENTO_OK) {
-        status = bento_game_text_create(&shooter->game, &shooter->hud, "Score: 0   Lives: 3",
-                                        HUD_X, HUD_Y, BENTO_GAME_WHITE);
+        status = bento_game_text_create(&shooter->game, &shooter->hud,
+                                        "Score: 0   Lives: 3", HUD_X,
+                                        HUD_Y, BENTO_GAME_WHITE);
     }
     return status;
 }
@@ -124,19 +128,22 @@ static bento_status_t add_bullet_pool(shooter_t *shooter)
     int32_t i;
 
     for (i = 0; (status == BENTO_OK) && (i < MAX_BULLETS); i++) {
-        status = bento_game_box_create(&shooter->game, &shooter->bullets[i], (bento_real_t)0,
-                                       (bento_real_t)PARKED_Y, (bento_real_t)BULLET_W,
-                                       (bento_real_t)BULLET_H, BENTO_GAME_CYAN);
+        status = bento_game_box_create(
+            &shooter->game, &shooter->bullets[i], (bento_real_t)0,
+            (bento_real_t)PARKED_Y, (bento_real_t)BULLET_W,
+            (bento_real_t)BULLET_H, BENTO_GAME_CYAN);
     }
     /* ซ่อนไว้ก่อน (ที่ทำให้ว่างคือ y = -50 จากการสร้างข้างบน) */
     for (i = 0; (status == BENTO_OK) && (i < MAX_BULLETS); i++) {
-        status = bento_game_box_hide(&shooter->game, &shooter->bullets[i]);
+        status =
+            bento_game_box_hide(&shooter->game, &shooter->bullets[i]);
     }
     return status;
 }
 
 /* value kept between low and high, as max(low, min(high, value)) */
-static bento_real_t clamp(bento_real_t value, bento_real_t low, bento_real_t high)
+static bento_real_t clamp(bento_real_t value, bento_real_t low,
+                          bento_real_t high)
 {
     const bento_real_t below_high = (value < high) ? value : high;
 
@@ -144,12 +151,14 @@ static bento_real_t clamp(bento_real_t value, bento_real_t low, bento_real_t hig
 }
 
 /* ยาน (จาก step2 คาบ 10): เร่ง ไถล เพดานความเร็ว ขอบจอ แล้ววาด */
-static bento_status_t steer_ship(shooter_t *shooter, const bento_game_keys_t *keys)
+static bento_status_t steer_ship(shooter_t *shooter,
+                                 const bento_game_keys_t *keys)
 {
     const bento_real_t accel = (bento_real_t)1.4;
     const bento_real_t max_speed = (bento_real_t)13.0;
     const bento_real_t friction = (bento_real_t)0.80;
-    const bento_real_t right_edge = (bento_real_t)(shooter->game.width - SHIP_W);
+    const bento_real_t right_edge =
+        (bento_real_t)(shooter->game.width - SHIP_W);
 
     if (keys->left) {
         shooter->ship_speed -= accel;
@@ -158,9 +167,12 @@ static bento_status_t steer_ship(shooter_t *shooter, const bento_game_keys_t *ke
     } else {
         shooter->ship_speed *= friction;
     }
-    shooter->ship_speed = clamp(shooter->ship_speed, -max_speed, max_speed);
-    shooter->ship_x = clamp(shooter->ship_x + shooter->ship_speed, (bento_real_t)0.0, right_edge);
-    return bento_game_box_move_to(&shooter->game, &shooter->ship, shooter->ship_x,
+    shooter->ship_speed =
+        clamp(shooter->ship_speed, -max_speed, max_speed);
+    shooter->ship_x = clamp(shooter->ship_x + shooter->ship_speed,
+                            (bento_real_t)0.0, right_edge);
+    return bento_game_box_move_to(&shooter->game, &shooter->ship,
+                                  shooter->ship_x,
                                   (bento_real_t)SHIP_Y);
 }
 
@@ -170,8 +182,8 @@ static bento_status_t on_frame(void *user, bool *out_stop)
     bento_game_keys_t keys;
     bento_status_t status = bento_game_keys(&shooter->game, &keys);
 
-    (void)user;     /* the state is g_shooter */
-    (void)out_stop; /* this step never ends the game by itself */
+    (void)user;        /* the state is g_shooter */
+    *out_stop = false; /* this step never ends the game by itself */
     /* (Back = ออก · Start = พักเกม: bento_game_run จัดการให้) */
     if (status == BENTO_OK) {
         status = steer_ship(shooter, &keys);
@@ -205,7 +217,8 @@ int main(void)
     bento_status_t status;
 
     (void)memset(shooter, 0, sizeof(*shooter));
-    bento_game_init(&shooter->game, bento_runtime_get_ui(), bento_runtime_is_running);
+    bento_game_init(&shooter->game, bento_runtime_get_ui(),
+                    bento_runtime_is_running);
     /* หน้าชื่อเกม: Start = เล่น · Back = ออก (เรียก start ให้ในตัว) */
     status = bento_game_title(&shooter->game, "SHOOTER", NULL, &quit);
     report_joystick(&shooter->game);
@@ -218,7 +231,8 @@ int main(void)
     if ((status == BENTO_OK) && !quit) {
         bool finished = false;
 
-        status = bento_game_run(&shooter->game, on_frame, NULL, FPS, &finished);
+        status = bento_game_run(&shooter->game, on_frame, NULL, FPS,
+                                &finished);
     }
     return (status == BENTO_E_CANCELLED) ? 0 : (int)status;
 }

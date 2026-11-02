@@ -25,11 +25,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "bento_runtime.h"
-
 #include "bento_fmt.h"
 #include "bento_game.h"
 #include "bento_gpio.h"
+#include "bento_runtime.h"
 
 /* The ship, the HUD and the frame rate. */
 enum {
@@ -69,7 +68,8 @@ static bool on_reterminal(void)
 #endif
 
     bento_gpio_board_info_init(&info);
-    if ((bento_gpio_board_info(&info) == BENTO_OK) && (info.name != NULL)) {
+    if ((bento_gpio_board_info(&info) == BENTO_OK) &&
+        (info.name != NULL)) {
         answer = (strcmp(info.name, "Seeed reTerminal") == 0);
     }
     return answer;
@@ -86,16 +86,18 @@ static void report_joystick(const bento_game_t *game)
 static bento_status_t add_ship_and_hud(shooter_t *shooter)
 {
     bento_status_t status = bento_game_box_create(
-        &shooter->game, &shooter->ship, (bento_real_t)SHIP_X, (bento_real_t)SHIP_Y,
-        (bento_real_t)SHIP_W, (bento_real_t)SHIP_H, BENTO_GAME_GREEN);
+        &shooter->game, &shooter->ship, (bento_real_t)SHIP_X,
+        (bento_real_t)SHIP_Y, (bento_real_t)SHIP_W,
+        (bento_real_t)SHIP_H, BENTO_GAME_GREEN);
 
     shooter->ship_x = (bento_real_t)SHIP_X;
     shooter->ship_speed = (bento_real_t)0.0;
     shooter->score = 0;
     shooter->lives = START_LIVES;
     if (status == BENTO_OK) {
-        status = bento_game_text_create(&shooter->game, &shooter->hud, "Score: 0   Lives: 3",
-                                        HUD_X, HUD_Y, BENTO_GAME_WHITE);
+        status = bento_game_text_create(&shooter->game, &shooter->hud,
+                                        "Score: 0   Lives: 3", HUD_X,
+                                        HUD_Y, BENTO_GAME_WHITE);
     }
     return status;
 }
@@ -104,10 +106,11 @@ static bento_status_t on_frame(void *user, bool *out_stop)
 {
     shooter_t *shooter = &g_shooter;
     bento_game_keys_t keys;
-    const bento_status_t status = bento_game_keys(&shooter->game, &keys);
+    const bento_status_t status =
+        bento_game_keys(&shooter->game, &keys);
 
-    (void)user;     /* the state is g_shooter */
-    (void)out_stop; /* this step never ends the game by itself */
+    (void)user;        /* the state is g_shooter */
+    *out_stop = false; /* this step never ends the game by itself */
     /* ปุ่มระบบ เอนจินจัดการเอง: Back = ออก · Start = พักเกม (Pause) */
 
     /* ----- เติมส่วนนี้เอง (งานของน้อง ๆ): 5 ขั้นของยานที่มีน้ำหนัก -----
@@ -130,7 +133,8 @@ int main(void)
     bento_status_t status;
 
     (void)memset(shooter, 0, sizeof(*shooter));
-    bento_game_init(&shooter->game, bento_runtime_get_ui(), bento_runtime_is_running);
+    bento_game_init(&shooter->game, bento_runtime_get_ui(),
+                    bento_runtime_is_running);
     /* หน้าเริ่ม: Start=เล่น Back=ออก (ทำ start ให้ในตัว) */
     status = bento_game_title(&shooter->game, "SHOOTER", NULL, &quit);
     report_joystick(&shooter->game);
@@ -140,7 +144,8 @@ int main(void)
     if ((status == BENTO_OK) && !quit) {
         bool finished = false;
 
-        status = bento_game_run(&shooter->game, on_frame, NULL, FPS, &finished);
+        status = bento_game_run(&shooter->game, on_frame, NULL, FPS,
+                                &finished);
     }
     return (status == BENTO_E_CANCELLED) ? 0 : (int)status;
 }

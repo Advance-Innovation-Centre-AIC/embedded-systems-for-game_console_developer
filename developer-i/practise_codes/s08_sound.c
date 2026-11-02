@@ -25,7 +25,6 @@
 #include <stdio.h>
 
 #include "bento_runtime.h"
-
 #include "bento_time.h"
 
 /* The lab's timing. */
@@ -33,8 +32,8 @@ enum {
     START_PAUSE_MS = 600,
     EAT_PAUSE_MS = 400,
     GAME_OVER_PAUSE_MS = 900,
-    NOTE_MS = 200,     /* โน้ตละ 200 ms */
-    NOTE_GAP_MS = 20,  /* +20 ms กันโน้ตเกยกัน ฟังเป็นจังหวะ */
+    NOTE_MS = 200,    /* โน้ตละ 200 ms */
+    NOTE_GAP_MS = 20, /* +20 ms กันโน้ตเกยกัน ฟังเป็นจังหวะ */
     MELODY_PAUSE_MS = 300,
     NOTE_VELOCITY = 100
 };
@@ -80,8 +79,11 @@ static bento_status_t play_melody(uint8_t wave)
     bento_status_t status = BENTO_OK;
     uint32_t i;
 
-    (void)wave; /* read by the tone of blanks (3) and (4) once you fill them in */
-    for (i = 0U; (status == BENTO_OK) && (i < (sizeof(melody) / sizeof(melody[0]))); i++) {
+    (void)
+        wave; /* read by the tone of blanks (3) and (4) once you fill them in */
+    for (i = 0U; (status == BENTO_OK) &&
+                 (i < (sizeof(melody) / sizeof(melody[0])));
+         i++) {
         /* เติม (3) และ (4): เล่นโน้ตปัจจุบันด้วย bento_ui_sfx_tone(bento_runtime_get_ui(),
          *   melody[i], wave, NOTE_VELOCITY, NOTE_MS) */
         status = pause_ms((uint32_t)NOTE_MS + (uint32_t)NOTE_GAP_MS);
@@ -107,7 +109,8 @@ int main(void)
         status = play_melody((uint8_t)BENTO_UI_WAVE_SINE);
     }
     if (status == BENTO_OK) {
-        (void)printf("จบแล็บเสียง — ลองแก้ melody / wave / NOTE_MS ดูว่าผลลัพธ์เปลี่ยนยังไง\n");
+        (void)printf("จบแล็บเสียง — ลองแก้ melody / wave / NOTE_MS "
+                     "ดูว่าผลลัพธ์เปลี่ยนยังไง\n");
     }
     /* เมนูเสียงสำเร็จรูปทั้งหมด 21 เสียง: bento_game_sfx(game, "ชื่อ") ใน bento_game.h
      *   Snake : "eat" "turn" "die" · Flappy: "flap" "point" "fall"

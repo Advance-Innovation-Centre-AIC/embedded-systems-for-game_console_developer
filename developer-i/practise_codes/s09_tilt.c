@@ -25,11 +25,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "bento_runtime.h"
-
 #include "bento_fmt.h"
 #include "bento_game.h"
 #include "bento_gpio.h"
+#include "bento_runtime.h"
 #include "bento_time.h"
 
 /* The box, the caption and the loop. */
@@ -37,7 +36,7 @@ enum {
     BOX_SIZE = 40, /* สร้างกล่องไว้กลางจอ ขนาด 40x40 */
     CAPTION_X = 20,
     CAPTION_Y = 20,
-    FRAME_MS = 30, /* ~30 fps */
+    FRAME_MS = 30,   /* ~30 fps */
     TILT_SPEED = 120 /* ตัวคูณ: ยิ่งเอียงมาก กล่องยิ่งวิ่งไว (ช่อง map ใช้) */
 };
 
@@ -65,7 +64,8 @@ static bool on_reterminal(void)
 #endif
 
     bento_gpio_board_info_init(&info);
-    if ((bento_gpio_board_info(&info) == BENTO_OK) && (info.name != NULL)) {
+    if ((bento_gpio_board_info(&info) == BENTO_OK) &&
+        (info.name != NULL)) {
         answer = (strcmp(info.name, "Seeed reTerminal") == 0);
     }
     return answer;
@@ -82,13 +82,19 @@ static void report_joystick(const bento_game_t *game)
 static bento_status_t add_box_and_caption(tilt_screen_t *screen)
 {
     bento_game_t *game = &screen->game;
+    const int32_t middle_x =
+        game->width /
+        2; /* whole pixels, as floor division in the .py */
+    const int32_t middle_y = game->height / 2;
     bento_status_t status = bento_game_box_create(
-        game, &screen->box, (bento_real_t)(game->width / 2), (bento_real_t)(game->height / 2),
-        (bento_real_t)BOX_SIZE, (bento_real_t)BOX_SIZE, BENTO_GAME_CYAN);
+        game, &screen->box, (bento_real_t)middle_x,
+        (bento_real_t)middle_y, (bento_real_t)BOX_SIZE,
+        (bento_real_t)BOX_SIZE, BENTO_GAME_CYAN);
 
     if (status == BENTO_OK) {
-        status = bento_game_text_create(game, &screen->caption, "เอียงบอร์ดเพื่อขยับกล่อง",
-                                        CAPTION_X, CAPTION_Y, BENTO_GAME_WHITE);
+        status = bento_game_text_create(game, &screen->caption,
+                                        "เอียงบอร์ดเพื่อขยับกล่อง", CAPTION_X,
+                                        CAPTION_Y, BENTO_GAME_WHITE);
     }
     return status;
 }
@@ -99,7 +105,8 @@ static tilt_t read_tilt(void)
     const bento_real_t gravity_ms2 = (bento_real_t)9.81;
     /* เติม: อ่านความเร่ง 3 แกนด้วย bento_sensors_bmi270_acceleration(&ax, &ay, &az)
      *       ได้ค่าหน่วย m/s² มาแทนศูนย์ทั้งสามตัวนี้ */
-    tilt_t tilt = {(bento_real_t)0.0, (bento_real_t)0.0, (bento_real_t)0.0};
+    tilt_t tilt = {(bento_real_t)0.0, (bento_real_t)0.0,
+                   (bento_real_t)0.0};
 
     /* แปลงเป็น g (วางราบ แกนหนึ่ง ≈ 1.0) — บรรทัดนี้ให้ไว้แล้ว */
     tilt.x = tilt.x / gravity_ms2;
@@ -113,7 +120,8 @@ static bento_real_t cut_dead_zone(bento_real_t value)
 {
     /* ค่าเอียงเล็ก ๆ ถือว่ายังนิ่ง กันกล่องสั่น */
     const bento_real_t dead_zone = (bento_real_t)0.10;
-    const bento_real_t size = (value < (bento_real_t)0.0) ? -value : value;
+    const bento_real_t size =
+        (value < (bento_real_t)0.0) ? -value : value;
 
     return (size < dead_zone) ? (bento_real_t)0.0 : value;
 }
@@ -148,7 +156,8 @@ static bento_status_t run_tilt_loop(tilt_screen_t *screen)
     while ((status == BENTO_OK) && !leaving) {
         bento_game_keys_t keys;
 
-        status = bento_game_keys(&screen->game, &keys); /* อ่านปุ่มระบบ (BACK = ออก) */
+        status = bento_game_keys(&screen->game,
+                                 &keys); /* อ่านปุ่มระบบ (BACK = ออก) */
         if ((status == BENTO_OK) && keys.back) {
             status = bento_game_clear(&screen->game);
             leaving = true;
@@ -158,7 +167,8 @@ static bento_status_t run_tilt_loop(tilt_screen_t *screen)
             /* เติม: map ค่าความเอียงเป็นระยะเลื่อนต่อเฟรม แล้วเรียก
              *       bento_game_box_move(&screen->game, &screen->box, dx, dy)
              *       ใบ้: dx = tilt.x * TILT_SPEED, dy = tilt.y * TILT_SPEED (กันขอบจอให้แล้ว) */
-            (void)tilt; /* read by the blank above once you fill it in */
+            (void)
+                tilt; /* read by the blank above once you fill it in */
             status = wait_frame();
         } else {
             /* the status ends the loop */
@@ -173,9 +183,11 @@ int main(void)
     bento_status_t status;
 
     (void)memset(&screen, 0, sizeof(screen));
-    bento_game_init(&screen.game, bento_runtime_get_ui(), bento_runtime_is_running);
+    bento_game_init(&screen.game, bento_runtime_get_ui(),
+                    bento_runtime_is_running);
     /* เคลียร์จอ + เตรียมระบบ */
-    status = bento_game_start(&screen.game, BENTO_GAME_WIDTH, BENTO_GAME_HEIGHT);
+    status = bento_game_start(&screen.game, BENTO_GAME_WIDTH,
+                              BENTO_GAME_HEIGHT);
     report_joystick(&screen.game);
     /* เติม: ปลุกเซนเซอร์ทั้งชุดก่อนใช้งาน ด้วย bento_sensors_init(&failed_mask) */
     if (status == BENTO_OK) {

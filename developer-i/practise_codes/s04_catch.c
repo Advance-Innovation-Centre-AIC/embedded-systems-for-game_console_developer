@@ -25,10 +25,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "bento_runtime.h"
-
 #include "bento_game.h"
 #include "bento_gpio.h"
+#include "bento_runtime.h"
 
 /* The pieces on the screen. */
 enum {
@@ -85,7 +84,8 @@ static bool on_reterminal(void)
 #endif
 
     bento_gpio_board_info_init(&info);
-    if ((bento_gpio_board_info(&info) == BENTO_OK) && (info.name != NULL)) {
+    if ((bento_gpio_board_info(&info) == BENTO_OK) &&
+        (info.name != NULL)) {
         answer = (strcmp(info.name, "Seeed reTerminal") == 0);
     }
     return answer;
@@ -99,28 +99,35 @@ static void report_joystick(const bento_game_t *game)
     }
 }
 
-static bento_status_t add_box(catch_game_t *catch_game, bento_game_box_t *box, rect_t place,
+static bento_status_t add_box(catch_game_t *catch_game,
+                              bento_game_box_t *box, rect_t place,
                               uint32_t color)
 {
-    return bento_game_box_create(&catch_game->game, box, (bento_real_t)place.x,
-                                 (bento_real_t)place.y, (bento_real_t)place.w,
-                                 (bento_real_t)place.h, color);
+    return bento_game_box_create(
+        &catch_game->game, box, (bento_real_t)place.x,
+        (bento_real_t)place.y, (bento_real_t)place.w,
+        (bento_real_t)place.h, color);
 }
 
 /* สร้าง Box / Text ครั้งเดียว (ห้ามสร้างใหม่ทุกเฟรม) */
 static bento_status_t add_pieces(catch_game_t *catch_game)
 {
-    const rect_t basket = {BASKET_X, BASKET_Y, BASKET_W, BASKET_H}; /* ตะกร้า อยู่ล่างจอ */
-    const rect_t item = {ITEM_X, ITEM_Y, ITEM_SIZE, ITEM_SIZE};     /* ของ เริ่มบนสุด */
-    bento_status_t status = add_box(catch_game, &catch_game->basket, basket, BENTO_GAME_GB_LIGHT);
+    const rect_t basket = {BASKET_X, BASKET_Y, BASKET_W,
+                           BASKET_H}; /* ตะกร้า อยู่ล่างจอ */
+    const rect_t item = {ITEM_X, ITEM_Y, ITEM_SIZE,
+                         ITEM_SIZE}; /* ของ เริ่มบนสุด */
+    bento_status_t status = add_box(catch_game, &catch_game->basket,
+                                    basket, BENTO_GAME_GB_LIGHT);
 
     if (status == BENTO_OK) {
-        status = add_box(catch_game, &catch_game->item, item, BENTO_GAME_GB_LIGHTEST);
+        status = add_box(catch_game, &catch_game->item, item,
+                         BENTO_GAME_GB_LIGHTEST);
     }
     if (status == BENTO_OK) {
         /* ป้ายคะแนน มุมซ้ายบน */
-        status = bento_game_text_create(&catch_game->game, &catch_game->score_text, "Score: 0",
-                                        SCORE_X, SCORE_Y, BENTO_GAME_WHITE);
+        status = bento_game_text_create(
+            &catch_game->game, &catch_game->score_text, "Score: 0",
+            SCORE_X, SCORE_Y, BENTO_GAME_WHITE);
     }
     catch_game->score = 0;
     catch_game->frames = 0;
@@ -135,8 +142,9 @@ static bento_status_t update(void *user, bool *out_stop)
     bento_game_keys_t pressed;
     bento_status_t status;
 
-    (void)user;     /* the state is g_catch */
-    (void)out_stop; /* only the blank of the 30 second end stops the round */
+    (void)user; /* the state is g_catch */
+    /* only the blank of the 30 second end stops the round */
+    *out_stop = false;
     /* คุมตะกร้าด้วยจอย: กดค้างยิ่งนานยิ่งเร็ว (bento_game_box_move กันขอบจอให้เอง) */
     status = bento_game_keys(&catch_game->game, &pressed);
     /* ----- เติมส่วนนี้เอง (งานของคุณ): ขยับตะกร้าซ้าย-ขวาตามจอย -----
@@ -170,7 +178,8 @@ int main(void)
     bento_status_t status;
 
     (void)memset(catch_game, 0, sizeof(*catch_game));
-    bento_game_init(&catch_game->game, bento_runtime_get_ui(), bento_runtime_is_running);
+    bento_game_init(&catch_game->game, bento_runtime_get_ui(),
+                    bento_runtime_is_running);
     /* หน้าเริ่ม: Start=เล่น  Back=ออก (title ทำ start ให้ในตัว) */
     status = bento_game_title(&catch_game->game, "CATCH", NULL, &quit);
     report_joystick(&catch_game->game);
@@ -181,7 +190,8 @@ int main(void)
         bool finished = false;
 
         /* Back = ออก / Start = พักเกม: bento_game_run จัดการให้ */
-        status = bento_game_run(&catch_game->game, update, NULL, FPS, &finished);
+        status = bento_game_run(&catch_game->game, update, NULL, FPS,
+                                &finished);
     }
     return (status == BENTO_E_CANCELLED) ? 0 : (int)status;
 }
