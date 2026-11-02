@@ -37,6 +37,14 @@
 #include "bento_random.h"
 #include "bento_runtime.h"
 
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
+enum {
+    FPS = 30
+};
+/* flappy_full วัด dt จริงด้วย time.ticks_ms · ชุดนี้ใช้ dt คงที่ จะได้ import แค่ bentogame */
+static const bento_real_t DT = (bento_real_t)1.0 / (bento_real_t)FPS;
+/* ---- end of settings ---- */
+
 /* a*b+c is two roundings in MicroPython: no fused multiply-add */
 #if defined(__clang__)
 #pragma STDC FP_CONTRACT OFF
@@ -46,7 +54,6 @@
 
 /* The program and its scenes. */
 enum {
-    FPS = 30,
     SCENE_COUNT = 4,
     SCENE_SPACE = 0,
     SCENE_COURT = 1,
@@ -808,8 +815,7 @@ static bento_status_t open_scene(kit_t *kit, int32_t scene)
 static bento_status_t play_meadow(kit_t *kit, int32_t option)
 {
     const pipe_mode_t *mode = &MODES[option % MODE_COUNT];
-    const bento_real_t frame_s = (bento_real_t)1.0 / (bento_real_t)FPS;
-    const bento_real_t moved = mode->speed_px_s * frame_s;
+    const bento_real_t moved = mode->speed_px_s * DT;
     char text[SAY_CHARS];
     int32_t step_px;
     bento_status_t status;
