@@ -21,21 +21,32 @@
  * - the state tuples are static const tables indexed by state_t;
  * - fsm_step() returns the new state and updates the frames left
  *   through a pointer, where Python returns a pair;
- * - the PSoC Edge has no libm: the water widths use an integer square
- *   root (exact), and sin / cos are a plain C polynomial, so a cloth
- *   can sit one pixel away from where MicroPython's libm puts it;
+ * - math.sqrt / sin / cos are <math.h> in the board's float width,
+ *   as py/modmath.c calls them (sqrtf / sinf / cosf on the PSoC Edge,
+ *   sqrt / sin / cos on the reTerminal), with fp-contract off so each
+ *   step rounds as MicroPython rounds it; math.pi is PI;
  * - the state lives in one struct at file scope (512 bytes or more);
  * - title()'s Back (SystemExit) and Stop end the program with 0.
  */
 #include <inttypes.h>
+#include <math.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
+#include "bento_fmt.h"
 #include "bento_game.h"
 #include "bento_gpio.h"
 #include "bento_runtime.h"
+
+/* No fused multiply-add: each product and sum rounds on its own, as
+ * MicroPython's float operations do, so the cloth pixels match. */
+#if defined(__clang__)
+#pragma STDC FP_CONTRACT OFF
+#elif defined(__GNUC__)
+#pragma GCC optimize("fp-contract=off")
+#endif
 
 /* The machine and its drum (แก้ได้). */
 enum {
@@ -202,54 +213,33 @@ static int32_t water_level(state_t state, int32_t left)
     return level;
 }
 
-/* int(math.sqrt(n)) for n >= 0, exactly, without libm. */
-static int32_t integer_root(int32_t value)
+/* math.sqrt, math.sin and math.cos in the width of the board's
+ * MicroPython float, the C functions py/modmath.c calls. */
+static bento_real_t real_sqrt(bento_real_t value)
 {
-    int32_t root = 0;
-
-    while (((root + 1) * (root + 1)) <= value) {
-        root += 1;
-    }
-    return root;
+#if BENTO_FMT_REAL_DOUBLE
+    return sqrt(value);
+#else
+    return sqrtf(value);
+#endif
 }
 
-/* math.sin without libm: the angle folded into [-pi/2, pi/2], then
- * the Taylor series to the x^11 term (error below 1e-7 there). */
-static bento_real_t sine_of(bento_real_t angle)
+static bento_real_t real_sin(bento_real_t angle)
 {
-    static const bento_real_t divisors[] = {
-        (bento_real_t)110, (bento_real_t)72, (bento_real_t)42,
-        (bento_real_t)20, (bento_real_t)6};
-    const bento_real_t two_pi = PI * 2;
-    const bento_real_t half_pi = PI / 2;
-    const bento_real_t turns = angle / two_pi;
-    const bento_real_t rounding = (bento_real_t)0.5;
-    const int32_t whole =
-        (int32_t)((turns < (bento_real_t)0) ? (turns - rounding)
-                                            : (turns + rounding));
-    bento_real_t folded = angle - ((bento_real_t)whole * two_pi);
-    bento_real_t square;
-    bento_real_t series = (bento_real_t)1;
-    uint32_t i;
-
-    if (folded > half_pi) {
-        folded = PI - folded;
-    } else if (folded < -half_pi) {
-        folded = -PI - folded;
-    } else {
-        /* already in [-pi/2, pi/2] */
-    }
-    square = folded * folded;
-    for (i = 0U; i < (uint32_t)(sizeof(divisors) / sizeof(divisors[0]));
-         i++) {
-        series = (bento_real_t)1 - ((square / divisors[i]) * series);
-    }
-    return folded * series;
+#if BENTO_FMT_REAL_DOUBLE
+    return sin(angle);
+#else
+    return sinf(angle);
+#endif
 }
 
-static bento_real_t cosine_of(bento_real_t angle)
+static bento_real_t real_cos(bento_real_t angle)
 {
-    return sine_of(angle + (PI / 2));
+#if BENTO_FMT_REAL_DOUBLE
+    return cos(angle);
+#else
+    return cosf(angle);
+#endif
 }
 
 static bool on_reterminal(void)
@@ -335,7 +325,8 @@ static bento_status_t add_water(washer_t *washer)
         const int32_t middle = DRUM_RADIUS - WATER_INSET -
                                (i * WATER_BAND_H) - (WATER_BAND_H / 2);
         const int32_t width =
-            integer_root(4 * ((rim * rim) - (middle * middle)));
+            (int32_t)(2 * real_sqrt((bento_real_t)((rim * rim) -
+                                                   (middle * middle))));
         const int32_t left_x = DRUM_X - (width / 2);
         const int32_t top_y = (DRUM_Y + middle) - (WATER_BAND_H / 2);
 
@@ -416,8 +407,8 @@ static bento_status_t add_panel(washer_t *washer)
 static bento_status_t place(washer_t *washer, bento_game_box_t *cloth,
                             bento_real_t angle, int32_t radius)
 {
-    const bento_real_t across = (bento_real_t)radius * cosine_of(angle);
-    const bento_real_t down = (bento_real_t)radius * sine_of(angle);
+    const bento_real_t across = (bento_real_t)radius * real_cos(angle);
+    const bento_real_t down = (bento_real_t)radius * real_sin(angle);
     const int32_t x =
         (int32_t)((bento_real_t)DRUM_X + across) - (CLOTH_PX / 2);
     const int32_t y =
@@ -556,7 +547,7 @@ static bento_status_t move_clothes(washer_t *washer)
             const bento_real_t phase =
                 ((bento_real_t)washer->frame * swing_rate) +
                 ((bento_real_t)i * swing);
-            const bento_real_t rock = swing * sine_of(phase);
+            const bento_real_t rock = swing * real_sin(phase);
 
             status = place(washer, &washer->clothes[i], (PI / 2) + rock,
                            SWING_RADIUS);
