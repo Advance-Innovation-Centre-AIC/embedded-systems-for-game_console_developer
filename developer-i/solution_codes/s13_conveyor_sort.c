@@ -36,6 +36,32 @@
 #include "bento_random.h"
 #include "bento_runtime.h"
 
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
+enum {
+    BOXES = 4, /* กล่องบนสายพาน (ชุดหมุนเวียน สร้างครั้งเดียว) */
+    GAP = 78   /* ระยะห่างระหว่างกล่อง (px) */
+};
+/* กด A ค้าง 1 เฟรม สายพานเร็วขึ้นเท่านี้ */
+static const bento_real_t ACCEL = (bento_real_t)0.20;
+/* ปล่อย A แล้วความเร็วคูณเท่านี้ทุกเฟรม (ค่อย ๆ หยุด) */
+static const bento_real_t FRICTION = (bento_real_t)0.96;
+/* เพดานความเร็วสายพาน (px ต่อเฟรม) */
+static const bento_real_t MAX_SPEED = (bento_real_t)6.0;
+enum {
+    REJECTS = 3, /* คัดผิดได้กี่ครั้งก่อนหยุดสายพาน */
+    /* สายพานแนวตั้งกลางจอ (บนสุด y = 40) */
+    BELT_X = 336,
+    BELT_W = 120,
+    BELT_END = 300,
+    BOX_W = 54,
+    BOX_H = 42,
+    LANE_X = BELT_X + ((BELT_W - BOX_W) / 2),
+    GATE_Y = 304,
+    GATE_W = 160,
+    CHUTE_W = 230
+};
+/* ---- end of settings ---- */
+
 /* a*b+c is two roundings in MicroPython: no fused multiply-add */
 #if defined(__clang__)
 #pragma STDC FP_CONTRACT OFF
@@ -43,7 +69,6 @@
 #pragma GCC optimize("fp-contract=off")
 #endif
 
-/* The belt (change these). */
 /* The value cards, in the order they are made. */
 enum {
     CARD_OK = 0,
@@ -53,9 +78,6 @@ enum {
 };
 
 enum {
-    BOXES = 4,   /* กล่องบนสายพาน (ชุดหมุนเวียน สร้างครั้งเดียว) */
-    GAP = 78,    /* ระยะห่างระหว่างกล่อง (px) */
-    REJECTS = 3, /* คัดผิดได้กี่ครั้งก่อนหยุดสายพาน */
     SIDES = 2,
     SLATS = 2,
     CARDS = 4,
@@ -69,29 +91,20 @@ enum {
 
 /* Where things are, in px. */
 enum {
-    BELT_X = 336,
-    BELT_W = 120,
-    BELT_END = 300,
     BELT_TOP = 40,
     BELT_RAIL = 4,
     SLAT_Y0 = 60,
     SLAT_STEP = 130,
     SLAT_H = 8,
     SLAT_WRAP = 260,
-    BOX_W = 54,
-    BOX_H = 42,
     BOX_FIRST =
         70, /* the first box starts 70 px above the belt's end */
     BOX_RADIUS = 3,
     BOX_EDGE =
         8, /* a wide brown edge = the box, the middle = its colour tag */
-    LANE_X = BELT_X + ((BELT_W - BOX_W) / 2),
-    GATE_Y = 304,
-    GATE_W = 160,
     GATE_H = 12,
     GATE_RADIUS = 4,
     CHUTE_Y = 322,
-    CHUTE_W = 230,
     CHUTE_H = 46,
     CHUTE_RADIUS = 6,
     CHUTE_EDGE = 3,
@@ -382,7 +395,7 @@ static bento_status_t add_belt(conveyor_t *conveyor)
     bento_game_t *game = &conveyor->game;
     bento_game_box_t belt;
     const rect_t belt_place = {BELT_X, BELT_TOP, BELT_W,
-                               BELT_END - BELT_TOP};
+                               (int32_t)BELT_END - BELT_TOP};
     const box_style_t belt_style = {COLOR_BELT, COLOR_RAIL, 1,
                                     BELT_RAIL};
     bento_status_t status =
@@ -390,7 +403,7 @@ static bento_status_t add_belt(conveyor_t *conveyor)
     int32_t i;
 
     for (i = 0; (status == BENTO_OK) && (i < SLATS); i++) {
-        const rect_t place = {BELT_X + BELT_RAIL,
+        const rect_t place = {(int32_t)BELT_X + BELT_RAIL,
                               SLAT_Y0 + (i * SLAT_STEP),
                               BELT_W - (2 * BELT_RAIL), SLAT_H};
         const box_style_t style = {COLOR_SLAT, BENTO_GAME_BORDER_NONE,
@@ -404,7 +417,8 @@ static bento_status_t add_belt(conveyor_t *conveyor)
                                       &conveyor->box_color[i]);
     }
     for (i = 0; (status == BENTO_OK) && (i < BOXES); i++) {
-        const rect_t place = {LANE_X, BELT_END - BOX_FIRST - (i * GAP),
+        const rect_t place = {LANE_X,
+                              (int32_t)BELT_END - BOX_FIRST - (i * GAP),
                               BOX_W, BOX_H};
         const box_style_t style = {COLORS[conveyor->box_color[i]],
                                    COLOR_CARDBOARD, BOX_RADIUS,
@@ -598,7 +612,8 @@ static bento_status_t reject_box(conveyor_t *conveyor, int32_t side)
     if (status == BENTO_OK) {
         status = bento_game_sprite_move_to(
             game, &conveyor->boom,
-            (bento_real_t)((CHUTE_X[side] + CHUTE_W) - BOOM_LEFT),
+            (bento_real_t)((CHUTE_X[side] + (int32_t)CHUTE_W) -
+                           BOOM_LEFT),
             (bento_real_t)BOOM_Y);
     }
     if (status == BENTO_OK) {
@@ -815,12 +830,6 @@ static bento_status_t update(void *user, bool *out_stop)
 {
     /* the state is the file-scope g_conveyor: no void * conversion (MISRA 11.5) */
     conveyor_t *conveyor = &g_conveyor;
-    const bento_real_t accel =
-        (bento_real_t)0.20; /* กด A ค้าง 1 เฟรม สายพานเร็วขึ้นเท่านี้ */
-    const bento_real_t friction =
-        (bento_real_t)0.96; /* ปล่อย A แล้วความเร็วคูณเท่านี้ทุกเฟรม */
-    const bento_real_t max_speed =
-        (bento_real_t)6.0; /* เพดานความเร็วสายพาน (px ต่อเฟรม) */
     bento_game_keys_t keys;
     const bool stopped = conveyor->rejects_left <= 0;
     bento_status_t status;
@@ -831,7 +840,7 @@ static bento_status_t update(void *user, bool *out_stop)
     (void)bento_game_keys(&conveyor->game, &keys);
     conveyor->speed = stopped ? (bento_real_t)0
                               : belt_step(conveyor->speed, keys.a,
-                                          accel, friction, max_speed);
+                                          ACCEL, FRICTION, MAX_SPEED);
     status = steer_gate(conveyor, &keys, stopped);
     if ((status == BENTO_OK) && (conveyor->speed > (bento_real_t)0)) {
         status = move_belt(conveyor);
