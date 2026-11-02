@@ -116,12 +116,13 @@ static bento_status_t redraw_snake(snake_t *snake)
 /* ฟังก์ชันนี้ถูกเรียกซ้ำทุกจังหวะ (= หัวใจของเกม) */
 static bento_status_t on_each_frame(void *user, bool *out_stop)
 {
-    /* the state main() handed to bento_game_run */
-    snake_t *snake = user;
+    snake_t *snake = &g_snake;
     bento_game_keys_t keys;
     bento_status_t status;
 
-    (void)out_stop;
+    /* the state is g_snake at file scope (C9): no void * conversion */
+    (void)user;
+    *out_stop = false; /* never ends the game loop by itself */
     bento_game_keys_init(&keys);
     status = bento_game_keys(&snake->game, &keys);
     if (status == BENTO_OK) {
@@ -210,7 +211,7 @@ int main(void)
     if ((status == BENTO_OK) && !quit) {
         bool finished = false;
 
-        status = bento_game_run(&snake->game, on_each_frame, snake, FPS,
+        status = bento_game_run(&snake->game, on_each_frame, NULL, FPS,
                                 &finished);
     }
     return (status == BENTO_E_CANCELLED) ? 0 : (int)status;

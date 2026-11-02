@@ -60,9 +60,9 @@ snake_t g_snake;
 /* ภาพยังนิ่ง คาบหน้าเราจะเติม logic เดินใน update() */
 static bento_status_t update(void *user, bool *out_stop)
 {
-    (void)user;
-    (void)out_stop;
-    return BENTO_OK; /* ทุกเฟรมยังไม่ต้องทำอะไร ภาพจึงนิ่ง */
+    (void)user;        /* this frame needs no state */
+    *out_stop = false; /* never ends the game loop by itself */
+    return BENTO_OK;   /* ทุกเฟรมยังไม่ต้องทำอะไร ภาพจึงนิ่ง */
 }
 
 /* The reTerminal's joystick prints nothing when it opens; the kits print a line. */
@@ -162,7 +162,7 @@ int main(void)
 
         /* Back = ออก / Start = หยุดชั่วคราว จัดการให้โดย game loop */
         status =
-            bento_game_run(&snake->game, update, snake, FPS, &finished);
+            bento_game_run(&snake->game, update, NULL, FPS, &finished);
     }
     return (status == BENTO_E_CANCELLED) ? 0 : (int)status;
 }

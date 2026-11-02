@@ -34,8 +34,8 @@ enum {
     START_LEN = 3,
     START_COL = 6,
     START_ROW = 8,
-    MAX_LEN =
-        64, /* the ui's widget table: no box is left for a longer snake */
+    /* the ui's widget table: no box is left for a longer snake */
+    MAX_LEN = 64,
     SCORE_X = 10,
     SCORE_Y = 8,
     FPS = 9
@@ -49,9 +49,8 @@ typedef struct {
 typedef struct {
     bento_game_t game;
     bento_random_t random;
-    cell_t body
-        [MAX_LEN +
-         1]; /* one more while the new head is in and the tail not yet out */
+    /* one more while the new head is in and the tail not yet out */
+    cell_t body[MAX_LEN + 1];
     int32_t length;
     bento_game_box_t squares[MAX_LEN];
     int32_t square_count;
@@ -95,8 +94,8 @@ static bento_status_t place_food_at_random_empty_cell(snake_t *snake)
             status = bento_random_randint(&snake->random, 0,
                                           GRID_ROWS - 1, &cell.row);
         }
-        free_cell = (status == BENTO_OK) &&
-                    !snake_covers(snake, cell); /* ห้ามทับตัวงู */
+        /* ห้ามทับตัวงู */
+        free_cell = (status == BENTO_OK) && !snake_covers(snake, cell);
     }
     if (status == BENTO_OK) {
         status =
@@ -162,12 +161,13 @@ static bento_status_t redraw_snake(snake_t *snake)
 
 static bento_status_t on_each_frame(void *user, bool *out_stop)
 {
-    /* the state main() handed to bento_game_run */
-    snake_t *snake = user;
+    snake_t *snake = &g_snake;
     bento_game_keys_t keys;
     bento_status_t status;
 
-    (void)out_stop;
+    /* the state is g_snake at file scope (C9): no void * conversion */
+    (void)user;
+    *out_stop = false; /* never ends the game loop by itself */
     bento_game_keys_init(&keys);
     status = bento_game_keys(&snake->game, &keys);
     if (status == BENTO_OK) {
@@ -292,7 +292,7 @@ int main(void)
     if ((status == BENTO_OK) && !quit) {
         bool finished = false;
 
-        status = bento_game_run(&snake->game, on_each_frame, snake, FPS,
+        status = bento_game_run(&snake->game, on_each_frame, NULL, FPS,
                                 &finished);
     }
     return (status == BENTO_E_CANCELLED) ? 0 : (int)status;
