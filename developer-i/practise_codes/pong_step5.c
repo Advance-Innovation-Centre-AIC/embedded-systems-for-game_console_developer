@@ -435,7 +435,7 @@ static bento_status_t end_if_won(pong_t *pong, bool *out_stop)
         bento_game_sfx(game, player_won ? "win" : "lose");
         status = bento_game_text_create(
             game, &result, player_won ? "YOU WIN!" : "AI WINS",
-            CENTER_X - RESULT_HALF_W, CENTER_Y,
+            (int32_t)CENTER_X - (int32_t)RESULT_HALF_W, CENTER_Y,
             player_won ? BENTO_GAME_GREEN : BENTO_GAME_RED);
         if (status == BENTO_OK) {
             pong->game_over = true;
@@ -526,7 +526,8 @@ static bento_status_t add_texts(pong_t *pong)
     if (status == BENTO_OK) {
         status = bento_game_text_create(
             game, &pong->hint, "UP/DOWN choose mode, A start",
-            CENTER_X - HINT_HALF_W, CENTER_Y + HINT_BELOW_MIDDLE,
+            (int32_t)CENTER_X - (int32_t)HINT_HALF_W,
+            (int32_t)CENTER_Y + (int32_t)HINT_BELOW_MIDDLE,
             BENTO_GAME_CYAN);
     }
     return status;

@@ -282,8 +282,9 @@ static bento_status_t add_field(pong_t *pong)
     }
     if (status == BENTO_OK) {
         status = bento_game_text_create(
-            game, &pong->score_text, "0 : 0", CENTER_X - SCORE_HALF_W,
-            SCORE_Y, BENTO_GAME_WHITE);
+            game, &pong->score_text, "0 : 0",
+            (int32_t)CENTER_X - (int32_t)SCORE_HALF_W, SCORE_Y,
+            BENTO_GAME_WHITE);
     }
     return status;
 }

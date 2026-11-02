@@ -272,8 +272,8 @@ static int32_t bars_on(bento_real_t level)
 
 static int32_t level_to_y(bento_real_t level)
 {
-    const bento_real_t height =
-        level * (bento_real_t)(STEP_PERCENT * SEG_H);
+    const int32_t step_h = (int32_t)STEP_PERCENT * (int32_t)SEG_H;
+    const bento_real_t height = level * (bento_real_t)step_h;
     const bento_real_t risen = height / (bento_real_t)FULL;
     const bento_real_t y = (bento_real_t)BOTTOM - risen;
 
@@ -673,7 +673,9 @@ static bento_status_t slide(bento_game_t *game,
         bento_real_t x = item->x + step;
 
         if (x > (bento_real_t)end) {
-            x -= (bento_real_t)(end - start);
+            const int32_t span = end - start;
+
+            x -= (bento_real_t)span;
         }
         if ((int32_t)x != (int32_t)item->x) {
             status = bento_game_box_move_to(game, item, x, item->y);
@@ -748,10 +750,12 @@ static bento_status_t show_target(tank_hmi_t *tank)
         }
         /* game.Text has no move_to: move the label inside it directly */
         if (status == BENTO_OK) {
-            status =
-                bento_ui_set_pos(game->ui, tank->target_tag.id,
-                                 (int16_t)(TANK_X + TANK_W + TAG_GAP),
-                                 (int16_t)(line_y - TAG_RAISE));
+            const int32_t tag_x =
+                (int32_t)TANK_X + (int32_t)TANK_W + (int32_t)TAG_GAP;
+
+            status = bento_ui_set_pos(game->ui, tank->target_tag.id,
+                                      (int16_t)tag_x,
+                                      (int16_t)(line_y - TAG_RAISE));
         }
     }
     return status;

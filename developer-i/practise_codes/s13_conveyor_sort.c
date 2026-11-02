@@ -667,13 +667,14 @@ static bento_status_t sort_box(conveyor_t *conveyor, int32_t slot)
 static bento_status_t move_belt(conveyor_t *conveyor)
 {
     bento_game_t *game = &conveyor->game;
+    const int32_t last_y = BELT_END - SLAT_H;
     bento_status_t status = BENTO_OK;
     int32_t i;
 
     for (i = 0; (status == BENTO_OK) && (i < SLATS); i++) {
         bento_game_box_t *slat = &conveyor->slats[i];
         const bento_real_t y = slat->y + conveyor->speed;
-        const bool past_end = y > (bento_real_t)(BELT_END - SLAT_H);
+        const bool past_end = y > (bento_real_t)last_y;
 
         status = bento_game_box_move_to(
             game, slat, slat->x,

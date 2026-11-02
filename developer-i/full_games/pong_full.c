@@ -189,8 +189,9 @@ static void clamp_ball_speed(pong_t *pong)
     const bento_real_t ball_maxv = (bento_real_t)14.0;
     const bento_real_t square_x = pong->ball_vx * pong->ball_vx;
     const bento_real_t square_y = pong->ball_vy * pong->ball_vy;
+    const bento_real_t square_sum = square_x + square_y;
     const bento_real_t speed =
-        (bento_real_t)pow((double)(square_x + square_y), 0.5);
+        (bento_real_t)pow((double)square_sum, 0.5);
 
     if (speed > ball_maxv) {
         const bento_real_t factor = ball_maxv / speed;
@@ -319,8 +320,9 @@ static void bounce_off_paddles(pong_t *pong)
     if ((pong->ball_vx < (bento_real_t)0) &&
         ball_hits(pong, &pong->left_paddle)) {
         const bento_real_t norm = hit_offset(pong, pong->left_y);
+        const int32_t paddle_right = PADDLE_X + PADDLE_W;
 
-        pong->ball_x = (bento_real_t)(PADDLE_X + PADDLE_W);
+        pong->ball_x = (bento_real_t)paddle_right;
         pong->ball_vx = absolute(pong->ball_vx) + ball_speedup;
         pong->ball_vy += norm * paddle_angle;
         /* ไม้ที่กำลังวิ่งใส่สปินเพิ่มให้อีก */

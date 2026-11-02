@@ -255,9 +255,11 @@ static bento_status_t render_pipe(flappy_t *flappy, pipe_t *pipe)
     /* the top pipe ends at the gap's top, the bottom pipe starts at
      * the gap's bottom */
     if ((status == BENTO_OK) && on) {
-        status = bento_game_box_move_to(
-            game, &pipe->part[PART_TOP], (bento_real_t)x,
-            (bento_real_t)(pipe->gap_top - flappy->play_height));
+        const int32_t top_y = pipe->gap_top - flappy->play_height;
+
+        status = bento_game_box_move_to(game, &pipe->part[PART_TOP],
+                                        (bento_real_t)x,
+                                        (bento_real_t)top_y);
     }
     if ((status == BENTO_OK) && on) {
         status = bento_game_box_move_to(game, &pipe->part[PART_BOTTOM],
@@ -283,6 +285,8 @@ static bool hit_pipe(const flappy_t *flappy, const pipe_t *pipe)
 {
     const int32_t half_bird = BIRD_BOX / 2;
     const int32_t half = pipe->gap / 2;
+    const int32_t gap_top = pipe->gap_y - half;
+    const int32_t gap_bottom = pipe->gap_y + half;
     const bool beside =
         ((bento_real_t)(BIRD_X + half_bird) < pipe->x) ||
         ((bento_real_t)(BIRD_X - half_bird) >
@@ -291,9 +295,9 @@ static bool hit_pipe(const flappy_t *flappy, const pipe_t *pipe)
 
     if (!beside) {
         hit = ((flappy->bird_y - (bento_real_t)half_bird) <
-               (bento_real_t)(pipe->gap_y - half)) ||
+               (bento_real_t)gap_top) ||
               ((flappy->bird_y + (bento_real_t)half_bird) >
-               (bento_real_t)(pipe->gap_y + half));
+               (bento_real_t)gap_bottom);
     }
     return hit;
 }
@@ -345,7 +349,7 @@ static bento_status_t move_bird(flappy_t *flappy, bento_real_t dt,
     const bento_real_t floor_y =
         (bento_real_t)flappy->play_height - half_box;
     const bento_real_t speed_gain = MODES[flappy->mode].gravity * dt;
-    bento_real_t distance = 0;
+    bento_real_t distance = (bento_real_t)0.0;
     bento_status_t status = BENTO_OK;
 
     flappy->velocity_y += speed_gain;
@@ -513,9 +517,10 @@ static bento_status_t add_sky(flappy_t *flappy)
             (i < (SKY_BAND_COUNT - 1))
                 ? band_h
                 : (flappy->play_height - (band_h * i));
+        const int32_t band_y = i * band_h;
 
         status = bento_game_box_create(
-            game, &band, (bento_real_t)0, (bento_real_t)(i * band_h),
+            game, &band, (bento_real_t)0, (bento_real_t)band_y,
             (bento_real_t)game->width, (bento_real_t)height,
             sky_bands[i]);
     }
@@ -649,9 +654,10 @@ static bento_status_t start_round(flappy_t *flappy)
                    MODES[flappy->mode].name);
     status = bento_game_text_set(game, &flappy->status, text);
     for (int32_t i = 0; (i < PIPES) && (status == BENTO_OK); i++) {
-        status = reset_pipe(
-            flappy, &flappy->pipes[i],
-            (bento_real_t)(game->width + (i * PIPE_SPACING)));
+        const int32_t start_x = game->width + (i * PIPE_SPACING);
+
+        status = reset_pipe(flappy, &flappy->pipes[i],
+                            (bento_real_t)start_x);
         if (status == BENTO_OK) {
             status = render_pipe(flappy, &flappy->pipes[i]);
         }

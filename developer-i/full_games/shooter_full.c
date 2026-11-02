@@ -126,11 +126,6 @@ typedef struct {
     bool collide_costs;
 } mode_rules_t;
 
-static const mode_rules_t MODES[MODE_COUNT] = {
-    {16, (bento_real_t)0.85, 99, false, false},
-    {26, (bento_real_t)0.70, 5, false, true},
-    {12, (bento_real_t)1.00, 3, true, true}};
-
 typedef struct {
     bento_real_t x;
     bento_real_t y;
@@ -806,10 +801,14 @@ static void reset_round(shooter_t *shooter)
 /* the scene, the ship at home, and the C game's first three enemies */
 static bento_status_t start_round(shooter_t *shooter, int32_t mode)
 {
+    static const mode_rules_t modes[MODE_COUNT] = {
+        {16, (bento_real_t)0.85, 99, false, false},
+        {26, (bento_real_t)0.70, 5, false, true},
+        {12, (bento_real_t)1.00, 3, true, true}};
     bento_status_t status = BENTO_OK;
     int32_t i;
 
-    shooter->rules = &MODES[mode];
+    shooter->rules = &modes[mode];
     status = build_scene(shooter);
     if (status == BENTO_OK) {
         reset_round(shooter);

@@ -24,9 +24,10 @@
  * What C does differently:
  *   - the module's globals (boxes, pools, mode row, score) are one
  *     file-scope g_shooter, which on_frame() reads (C9);
- *   - MODES is a static const table of mode_t; MODE picks its row;
+ *   - MODES is a static const table of shooter_mode_t (modes, inside
+ *     reset_state, its one reader); MODE picks its row;
  *   - find_free_bullet() returns a pointer to the Box, NULL for None;
- *   - ship.w // 2 is integer division of the int 62 (both operands
+ *   - Python's floor division of ship.w by 2 is integer division of the int 62 (both operands
  *     positive, so it equals floor division);
  *   - on_frame()'s `return False` is *out_stop = true;
  *   - `import random` has nothing to map: only the blank would call it;
@@ -98,13 +99,7 @@ typedef struct {
     int32_t start_lives;
     bool lose_when_pass;
     bool lose_when_hit;
-} mode_t;
-
-/* blank 1: the student adds the EASY and DIFFICULT rows */
-static const mode_t MODES[MODE_COUNT] = {
-    {"FREE SHOOTER", 16, (bento_real_t)0.85, 99, false, false}};
-static const uint32_t ENEMY_COLORS[ENEMY_COLOR_COUNT] = {
-    BENTO_GAME_RED, BENTO_GAME_ORANGE, BENTO_GAME_PINK};
+} shooter_mode_t;
 
 typedef struct {
     bento_real_t x;
@@ -115,7 +110,7 @@ typedef struct {
 
 typedef struct {
     bento_game_t game;
-    mode_t mode;
+    shooter_mode_t mode;
     bento_game_box_t ship;
     bento_game_text_t hud;
     bento_game_box_t bullets[MAX_BULLETS];
@@ -221,6 +216,8 @@ static bento_status_t add_pool(bento_game_t *game,
 
 static bento_status_t build_play_screen(shooter_t *shooter)
 {
+    static const uint32_t enemy_colors[ENEMY_COLOR_COUNT] = {
+        BENTO_GAME_RED, BENTO_GAME_ORANGE, BENTO_GAME_PINK};
     const rect_t bullet_size = {(bento_real_t)0, (bento_real_t)0,
                                 (bento_real_t)BULLET_W,
                                 (bento_real_t)BULLET_H};
@@ -237,7 +234,7 @@ static bento_status_t build_play_screen(shooter_t *shooter)
     if (status == BENTO_OK) {
         status = add_pool(&shooter->game, shooter->enemies,
                           (uint32_t)MAX_ENEMIES, &enemy_size,
-                          ENEMY_COLORS[0]);
+                          enemy_colors[0]);
     }
     for (uint32_t i = 0U; i < (uint32_t)MAX_ENEMIES; i++) {
         shooter->enemy_active[i] = false;
@@ -259,8 +256,9 @@ static bento_game_box_t *find_free_bullet(shooter_t *shooter)
     return free_bullet;
 }
 
-/* blank 2: find a free enemy, borrow it, colour it from ENEMY_COLORS,
- * place it above the screen, show it and give it a speed times the
+/* blank 2: find a free enemy, borrow it, colour it from ENEMY_COLORS
+ * (enemy_colors in build_play_screen; it goes back to file scope once
+ * this blank reads it too), place it above the screen, show it and give it a speed times the
  * mode's speed_mul. Still `pass`, so it releases nothing. */
 static void spawn_enemy(void)
 {
@@ -556,10 +554,14 @@ static bento_status_t on_frame(void *user, bool *out_stop)
 
 static void reset_state(shooter_t *shooter)
 {
+    /* blank 1: the student adds the EASY and DIFFICULT rows */
+    static const shooter_mode_t modes[MODE_COUNT] = {
+        {"FREE SHOOTER", 16, (bento_real_t)0.85, 99, false, false}};
+
     (void)memset(shooter, 0, sizeof(*shooter));
     bento_game_init(&shooter->game, bento_runtime_get_ui(),
                     bento_runtime_is_running);
-    shooter->mode = MODES[MODE];
+    shooter->mode = modes[MODE];
     bento_game_box_init(&shooter->ship);
     bento_game_text_init(&shooter->hud);
     for (uint32_t i = 0U; i < (uint32_t)MAX_BULLETS; i++) {

@@ -564,8 +564,9 @@ static int32_t frame_period_ms(int32_t mode)
     static const int32_t step_ms[MODE_COUNT] = {150, 115, 70};
     const bento_real_t second_ms = (bento_real_t)MS_PER_SECOND;
     const bento_real_t fps = second_ms / (bento_real_t)step_ms[mode];
+    const bento_real_t period_ms = second_ms / fps;
 
-    return (int32_t)(second_ms / fps);
+    return (int32_t)period_ms;
 }
 
 /* After the loop: Back in play keeps the score and ends the game, Y
