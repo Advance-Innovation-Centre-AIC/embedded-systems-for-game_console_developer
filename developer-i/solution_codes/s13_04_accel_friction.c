@@ -36,19 +36,29 @@
 #include "bento_gpio.h"
 #include "bento_runtime.h"
 
-/* The ship, the floor and the speed bar (แก้ได้). */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
+static const bento_real_t ACCEL =
+    (bento_real_t)1.4; /* ค่าเดียวกับ shooter_step2.py */
+static const bento_real_t VMAX = (bento_real_t)13.0;
+/* ช้ากว่านี้ถือว่าหยุดแล้ว (v = 0) */
+static const bento_real_t STOP = (bento_real_t)0.2;
 enum {
-    SEGMENTS = 7, /* ก้อนแถบความเร็วต่อข้าง */
-    SIDES = 2,
-    MODES = 3,
+    SEGS = 7, /* ก้อนแถบความเร็วต่อข้าง */
     SHIP_W = 62,
     SHIP_Y = 150,
     FLOOR_Y = 180,
-    FLOOR_H = 10,
     BAR_Y = 250,
-    CENTER_X = BENTO_GAME_WIDTH / 2,
+    CENTER = BENTO_GAME_WIDTH / 2
+};
+/* ---- end of settings ---- */
+
+/* The ship, the floor and the speed bar. */
+enum {
+    SIDES = 2,
+    MODES = 3,
+    FLOOR_H = 10,
     HALF_SHIP_W = SHIP_W / 2, /* floor division */
-    SHIP_START_X = CENTER_X - HALF_SHIP_W,
+    SHIP_START_X = (int32_t)CENTER - HALF_SHIP_W,
     SEGMENT_GAP = 6,
     SEGMENT_STEP = 46,
     SEGMENT_W = 40,
@@ -56,7 +66,7 @@ enum {
     ZERO_LINE_W = 4,
     ZERO_LINE_RISE = 6,
     ZERO_LINE_H = 36,
-    ZERO_LINE_X = CENTER_X - (ZERO_LINE_W / 2),
+    ZERO_LINE_X = (int32_t)CENTER - (ZERO_LINE_W / 2),
     LABEL_DROP = 34,
     MAX_LABEL_W = 30,
     SPEED_LABEL_SHIFT = 30,
@@ -77,7 +87,6 @@ enum {
     SLIDE_Y = 62
 };
 
-static const bento_real_t VMAX = (bento_real_t)13.0;
 static const bento_real_t FRICTIONS[MODES] = {
     (bento_real_t)0.95, (bento_real_t)0.78, (bento_real_t)0.30};
 /* สีพื้น: น้ำแข็ง · ปกติ · โคลน */
@@ -99,7 +108,7 @@ typedef struct {
     bento_game_box_t floor;
     bento_game_box_t flag;
     bento_game_sprite_t ship;
-    bento_game_box_t bar[SIDES][SEGMENTS];
+    bento_game_box_t bar[SIDES][SEGS];
     bento_real_t ship_x;
     bento_real_t speed;
     int32_t mode;
@@ -129,11 +138,10 @@ static int32_t absolute_int(int32_t value)
 static bento_real_t next_speed(bento_real_t speed, int32_t push,
                                bento_real_t friction)
 {
-    static const bento_real_t accel = (bento_real_t)1.4;
     bento_real_t result = speed;
 
     if (push != 0) {
-        result += (bento_real_t)push * accel; /* กดค้าง -> เร่ง */
+        result += (bento_real_t)push * ACCEL; /* กดค้าง -> เร่ง */
     } else {
         result *= friction; /* ปล่อย -> หน่วง */
     }
@@ -151,7 +159,7 @@ static int32_t bar_level(bento_real_t speed)
 {
     const bento_real_t half = (bento_real_t)0.5;
     const bento_real_t share = absolute(speed) / VMAX;
-    const bento_real_t blocks = share * (bento_real_t)SEGMENTS;
+    const bento_real_t blocks = share * (bento_real_t)SEGS;
     const bento_real_t rounded = blocks + half;
     const int32_t count = (int32_t)rounded;
 
@@ -236,7 +244,7 @@ static bento_status_t add_texts(slide_game_t *slide_game)
 static bento_status_t add_floor_and_ship(slide_game_t *slide_game)
 {
     bento_game_t *game = &slide_game->game;
-    const int32_t flag_y = FLOOR_Y - FLAG_H;
+    const int32_t flag_y = (int32_t)FLOOR_Y - FLAG_H;
     bento_status_t status = bento_game_box_create(
         game, &slide_game->floor, (bento_real_t)0,
         (bento_real_t)FLOOR_Y, (bento_real_t)BENTO_GAME_WIDTH,
@@ -262,10 +270,11 @@ static bento_status_t add_segment(slide_game_t *slide_game,
                                   int32_t side, int32_t i)
 {
     const int32_t left =
-        (side > 0) ? (CENTER_X + SEGMENT_GAP + (i * SEGMENT_STEP))
-                   : (CENTER_X - SEGMENT_STEP - (i * SEGMENT_STEP));
+        (side > 0)
+            ? ((int32_t)CENTER + SEGMENT_GAP + (i * SEGMENT_STEP))
+            : ((int32_t)CENTER - SEGMENT_STEP - (i * SEGMENT_STEP));
     const uint32_t color =
-        (i == (SEGMENTS - 1)) ? BENTO_GAME_RED : BENTO_GAME_GREEN;
+        (i == (SEGS - 1)) ? BENTO_GAME_RED : BENTO_GAME_GREEN;
     bento_game_box_t *segment = &slide_game->bar[(side > 0) ? 1 : 0][i];
     bento_status_t status = bento_game_box_create(
         &slide_game->game, segment, (bento_real_t)left,
@@ -285,7 +294,7 @@ static bento_status_t add_bar(slide_game_t *slide_game)
     bento_status_t status = BENTO_OK;
 
     for (side = -1; (status == BENTO_OK) && (side <= 1); side += 2) {
-        for (i = 0; (status == BENTO_OK) && (i < SEGMENTS); i++) {
+        for (i = 0; (status == BENTO_OK) && (i < SEGS); i++) {
             status = add_segment(slide_game, side, i);
         }
     }
@@ -295,8 +304,8 @@ static bento_status_t add_bar(slide_game_t *slide_game)
 static bento_status_t add_bar_labels(slide_game_t *slide_game)
 {
     bento_game_t *game = &slide_game->game;
-    const int32_t label_y = BAR_Y + LABEL_DROP;
-    const int32_t zero_line_y = BAR_Y - ZERO_LINE_RISE;
+    const int32_t label_y = (int32_t)BAR_Y + LABEL_DROP;
+    const int32_t zero_line_y = (int32_t)BAR_Y - ZERO_LINE_RISE;
     bento_game_box_t zero_line;
     bento_game_text_t low_label;
     bento_game_text_t high_label;
@@ -312,22 +321,24 @@ static bento_status_t add_bar_labels(slide_game_t *slide_game)
         (bento_real_t)ZERO_LINE_H, BENTO_GAME_WHITE);
     (void)snprintf(text, sizeof(text), "-%" PRId32, (int32_t)VMAX);
     if (status == BENTO_OK) {
-        status =
-            bento_game_text_create(game, &low_label, text,
-                                   CENTER_X - (SEGMENT_STEP * SEGMENTS),
-                                   label_y, BENTO_GAME_WHITE);
+        status = bento_game_text_create(
+            game, &low_label, text,
+            (int32_t)CENTER - (SEGMENT_STEP * (int32_t)SEGS), label_y,
+            BENTO_GAME_WHITE);
     }
     (void)snprintf(text, sizeof(text), "+%" PRId32, (int32_t)VMAX);
     if (status == BENTO_OK) {
         status = bento_game_text_create(
             game, &high_label, text,
-            (CENTER_X + (SEGMENT_STEP * SEGMENTS)) - MAX_LABEL_W,
+            ((int32_t)CENTER + (SEGMENT_STEP * (int32_t)SEGS)) -
+                MAX_LABEL_W,
             label_y, BENTO_GAME_WHITE);
     }
     if (status == BENTO_OK) {
-        status = bento_game_text_create(
-            game, &slide_game->speed_text, "",
-            CENTER_X - SPEED_LABEL_SHIFT, label_y, BENTO_GAME_WHITE);
+        status =
+            bento_game_text_create(game, &slide_game->speed_text, "",
+                                   (int32_t)CENTER - SPEED_LABEL_SHIFT,
+                                   label_y, BENTO_GAME_WHITE);
     }
     return status;
 }
@@ -375,12 +386,11 @@ static bento_status_t build_screen(slide_game_t *slide_game)
 /* คิด: ปุ่มเปลี่ยน "ความเร็ว" แล้วความเร็วค่อยเปลี่ยนตำแหน่ง */
 static bento_status_t steer(slide_game_t *slide_game, int32_t push)
 {
-    static const bento_real_t stop_speed = (bento_real_t)0.2;
     const bento_real_t friction = FRICTIONS[slide_game->mode];
     bento_status_t status = BENTO_OK;
 
     slide_game->speed = next_speed(slide_game->speed, push, friction);
-    if ((push == 0) && (absolute(slide_game->speed) < stop_speed)) {
+    if ((push == 0) && (absolute(slide_game->speed) < STOP)) {
         slide_game->speed = (bento_real_t)0.0;
     }
     if ((push == 0) && (slide_game->prev_push != 0) &&
@@ -480,7 +490,7 @@ static bento_status_t show_side(slide_game_t *slide_game, int32_t side,
     int32_t i;
     bento_status_t status = BENTO_OK;
 
-    for (i = 0; (status == BENTO_OK) && (i < SEGMENTS); i++) {
+    for (i = 0; (status == BENTO_OK) && (i < SEGS); i++) {
         status = show_segment(slide_game, side, i, level);
     }
     return status;
@@ -588,7 +598,7 @@ static void reset_state(slide_game_t *slide_game)
     bento_game_box_init(&slide_game->flag);
     bento_game_sprite_init(&slide_game->ship);
     for (side = 0; side < SIDES; side++) {
-        for (i = 0; i < SEGMENTS; i++) {
+        for (i = 0; i < SEGS; i++) {
             bento_game_box_init(&slide_game->bar[side][i]);
         }
     }
