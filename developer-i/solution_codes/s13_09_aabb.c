@@ -35,19 +35,26 @@
 #include "bento_gpio.h"
 #include "bento_runtime.h"
 
-/* The field and box A (แก้ได้). */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
 enum {
-    STEP_PX = 4, /* กดจอยค้าง กล่อง A ขยับเฟรมละ 4 px */
-    A_W = 46,
+    STEP = 4, /* กดจอยค้าง กล่อง A ขยับเฟรมละ 4 px */
+    A_W = 46, /* ขนาดกล่อง A (หุ่นยนต์ส่งของ AGV) */
     A_H = 30,
-    A_START_X = 332,
-    A_START_Y = 270,
-    A_BORDER_W = 2,
-    A_RADIUS = 3,
+    /* ขอบสนามลงตัวกับก้าว 4 px จอดชิดขอบโซนได้พอดี */
     FIELD_X = 12,
     FIELD_Y = 10,
     FIELD_W = 450,
     FIELD_H = 350,
+    HUD_X = 478
+};
+/* ---- end of settings ---- */
+
+/* Box A and the field. */
+enum {
+    A_START_X = 332,
+    A_START_Y = 270,
+    A_BORDER_W = 2,
+    A_RADIUS = 3,
     ZONE_COUNT = 3,
     ZONE_RADIUS = 4,
     ZONE_LABEL_DX = 8,
@@ -57,7 +64,6 @@ enum {
 
 /* The panel on the right. */
 enum {
-    HUD_X = 478,
     HUD_A_Y = 12,
     HUD_NAME_Y = 40,
     HUD_B_Y = 66,
@@ -293,9 +299,9 @@ static bento_status_t add_part_rows(aabb_t *aabb)
             (bento_real_t)LAMP_PX, (bento_real_t)LAMP_PX,
             COLOR_LAMP_OFF, BENTO_GAME_BORDER_NONE, LAMP_RADIUS, 0);
         if (status == BENTO_OK) {
-            status =
-                add_text(aabb, &aabb->lines[i], "", HUD_X + LINE_DX,
-                         LINE_Y + (i * ROW_GAP), BENTO_GAME_WHITE);
+            status = add_text(aabb, &aabb->lines[i], "",
+                              (int32_t)HUD_X + LINE_DX,
+                              LINE_Y + (i * ROW_GAP), BENTO_GAME_WHITE);
         }
     }
     return status;
@@ -327,8 +333,9 @@ static bento_status_t add_panel(aabb_t *aabb)
             BENTO_GAME_BORDER_NONE, HIT_LAMP_RADIUS, 0);
     }
     if (status == BENTO_OK) {
-        status = add_text(aabb, &aabb->hud_hit, "", HUD_X + HUD_HIT_DX,
-                          HUD_HIT_Y, BENTO_GAME_WHITE);
+        status = add_text(aabb, &aabb->hud_hit, "",
+                          (int32_t)HUD_X + HUD_HIT_DX, HUD_HIT_Y,
+                          BENTO_GAME_WHITE);
     }
     if (status == BENTO_OK) {
         status = add_text(aabb, &note, "ผิดข้อเดียว = ไม่ชน", HUD_X, NOTE_Y,
@@ -346,9 +353,9 @@ static bento_status_t drive_agv(aabb_t *aabb,
                                 const bento_game_keys_t *keys)
 {
     const int32_t step_x =
-        (keys->right ? STEP_PX : 0) - (keys->left ? STEP_PX : 0);
+        (keys->right ? STEP : 0) - (keys->left ? STEP : 0);
     const int32_t step_y =
-        (keys->down ? STEP_PX : 0) - (keys->up ? STEP_PX : 0);
+        (keys->down ? STEP : 0) - (keys->up ? STEP : 0);
     bento_status_t status = BENTO_OK;
 
     if ((step_x != 0) || (step_y != 0)) {
