@@ -1,0 +1,250 @@
+/*
+ * pong_step2.c -- สร้าง Pong #2 (คาบ 12): ไม้ตีฝั่งเราขยับ (เร่ง+เสียดทาน)
+ *
+ * Twin of pong_step2.py
+ * (embedded-systems-for-game_console_developer/developer-i/solution_codes/pong_step2.py).
+ *
+ * หน้าเริ่ม PONG รอกด Start จากนั้นมีไม้ตีซ้ายของเรา ลูกบอล และป้ายบอกวิธีเล่น
+ * กด UP/DOWN ค้างไว้ ไม้จะค่อย ๆ เร่งความเร็ว (สูงสุด 12 px ต่อเฟรม) ปล่อยปุ่มแล้ว
+ * ไม้จะไถลช้าลงจนหยุดเอง และไม่ออกนอกสนาม ลูกบอลยังเด้งทั้งสี่ด้าน (เสียง wall
+ * เมื่อชนบนหรือล่าง) กด Back เพื่อออก
+ *
+ * The PONG title waits for Start. Then our left paddle, the ball and a
+ * caption appear. Holding UP or DOWN speeds the paddle up (at most 12
+ * px a frame); on release it slides to a stop, and it never leaves the
+ * court. The ball still bounces off all four walls, with the "wall"
+ * sound at the top and the bottom. Back quits.
+ *
+ * C twin of the Example Explorer program devi-pong-2
+ * (py/devi-pong-2.py, the practise version of this solution).
+ * Style: CLEAN_C.md.
+ * What C does differently:
+ *   - the module's globals are one pong_t at file scope (too big for
+ *     the stack), set again at the start of main;
+ *   - floats are bento_real_t, each board's MicroPython float, and
+ *     max()/min() are two helpers that keep Python's choice of argument;
+ *   - on_each_frame() is the update bento_game_run calls each frame,
+ *     returning a status where MicroPython would raise;
+ *   - title()'s Back (SystemExit) and Stop (KeyboardInterrupt) both end
+ *     main with 0;
+ *   - joystick.init() inside title() prints its line on the PSoC Edge
+ *     kits only, so the program prints it when bento_game says it ran.
+ */
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+
+#include "bento_fmt.h"
+#include "bento_game.h"
+#include "bento_gpio.h"
+#include "bento_runtime.h"
+
+/* a*b+c is two roundings in MicroPython: no fused multiply-add */
+#if defined(__clang__)
+#pragma STDC FP_CONTRACT OFF
+#elif defined(__GNUC__)
+#pragma GCC optimize("fp-contract=off")
+#endif
+
+enum { /* sizes and places, px */
+    PADDLE_W = 14,
+    PADDLE_H = 90,
+    BALL_SIZE = 14,
+    PADDLE_X = 20,
+    CAPTION_X = 16,
+    CAPTION_Y = 12
+};
+enum { /* frames per second */
+    FPS = 60
+};
+
+static const bento_real_t ACCEL = (bento_real_t)1.5;
+static const bento_real_t MAX_SPEED = (bento_real_t)12.0;
+static const bento_real_t FRICTION = (bento_real_t)0.78;
+static const bento_real_t START_VX = (bento_real_t)6.2;
+static const bento_real_t START_VY = (bento_real_t)3.4;
+
+typedef struct {
+    bento_game_t game;
+    bento_game_box_t player_paddle;
+    bento_game_box_t ball;
+    int32_t paddle_start_y;
+    bento_real_t ball_x;
+    bento_real_t ball_y;
+    bento_real_t ball_vx;
+    bento_real_t ball_vy;
+    bento_real_t player_y;
+    bento_real_t player_speed;
+} pong_t;
+
+/* Too big for the 8 KB program stack: file scope, zeroed by the
+ * loader on every load, and set again at the start of main()
+ * (CLEAN_C.md C9, deviation BENTO-MISRA-E03/E04). */
+extern pong_t g_pong;
+pong_t g_pong;
+
+/* Python's min(a, b): a, unless b is smaller */
+static bento_real_t real_min(bento_real_t first, bento_real_t second)
+{
+    return (second < first) ? second : first;
+}
+
+/* Python's max(a, b): a, unless b is larger */
+static bento_real_t real_max(bento_real_t first, bento_real_t second)
+{
+    return (second > first) ? second : first;
+}
+
+/* held = speed up, released = slide to a stop, kept on the court */
+static bento_status_t move_player(pong_t *pong,
+                                  const bento_game_keys_t *keys)
+{
+    const bento_real_t lowest_y =
+        (bento_real_t)(pong->game.height - PADDLE_H);
+
+    if (keys->up && !keys->down) {
+        pong->player_speed -= ACCEL;
+    } else if (keys->down && !keys->up) {
+        pong->player_speed += ACCEL;
+    } else {
+        pong->player_speed *= FRICTION;
+    }
+    pong->player_speed =
+        real_max(-MAX_SPEED, real_min(MAX_SPEED, pong->player_speed));
+    pong->player_y = real_max(
+        (bento_real_t)0,
+        real_min(lowest_y, pong->player_y + pong->player_speed));
+    return bento_game_box_move_to(&pong->game, &pong->player_paddle,
+                                  (bento_real_t)PADDLE_X,
+                                  pong->player_y);
+}
+
+/* the ball still bounces off all four walls this step */
+static bento_status_t move_ball(pong_t *pong)
+{
+    const int32_t width = pong->game.width;
+    const int32_t height = pong->game.height;
+
+    pong->ball_x += pong->ball_vx;
+    pong->ball_y += pong->ball_vy;
+    if ((pong->ball_y <= (bento_real_t)0) ||
+        (pong->ball_y >= (bento_real_t)(height - BALL_SIZE))) {
+        pong->ball_vy = -pong->ball_vy;
+        bento_game_sfx(&pong->game, "wall");
+    }
+    if ((pong->ball_x <= (bento_real_t)0) ||
+        (pong->ball_x >= (bento_real_t)(width - BALL_SIZE))) {
+        pong->ball_vx = -pong->ball_vx;
+    }
+    return bento_game_box_move_to(&pong->game, &pong->ball,
+                                  pong->ball_x, pong->ball_y);
+}
+
+/* one frame; only Back (handled by run) ends the game */
+static bento_status_t on_each_frame(void *user, bool *out_stop)
+{
+    pong_t *pong = &g_pong;
+    bento_game_keys_t keys;
+    bento_status_t status = BENTO_OK;
+
+    *out_stop = false; /* the original never returns False */
+    (void)user;        /* the state is g_pong (file scope, C9) */
+    bento_game_keys_init(&keys);
+    /* keys() never fails: a silent pad reads as no key held */
+    (void)bento_game_keys(&pong->game, &keys);
+    status = move_player(pong, &keys);
+    if (status == BENTO_OK) {
+        status = move_ball(pong);
+    }
+    return status;
+}
+
+/* Is this the reTerminal? Asked at run time by the name the board
+ * gives, so one Emulator build serves both of its board models. A
+ * board that cannot say keeps the build target's answer. */
+static bool on_reterminal(void)
+{
+    bento_gpio_board_info_t info;
+#if defined(BENTO_TARGET_RETERMINAL)
+    bool answer = true;
+#else
+    bool answer = false;
+#endif
+
+    bento_gpio_board_info_init(&info);
+    if ((bento_gpio_board_info(&info) == BENTO_OK) &&
+        (info.name != NULL)) {
+        answer = (strcmp(info.name, "Seeed reTerminal") == 0);
+    }
+    return answer;
+}
+
+/* modjoystick.c's joystick.init() prints this line on the PSoC Edge
+ * kits; the reTerminal opens its pad too, but prints nothing */
+static void report_joystick(const bento_game_t *game)
+{
+    if ((game->joystick_init == BENTO_OK) && !on_reterminal()) {
+        (void)printf("joystick: USB Host HID initialized on CM55\n");
+    }
+}
+
+/* the paddle, the ball and the caption, then the starting numbers */
+static bento_status_t build_court(pong_t *pong)
+{
+    bento_game_t *game = &pong->game;
+    const int32_t mid_x = game->width / 2;
+    const int32_t mid_y = game->height / 2;
+    bento_game_text_t caption;
+    bento_status_t status = bento_game_box_create(
+        game, &pong->player_paddle, (bento_real_t)PADDLE_X,
+        (bento_real_t)pong->paddle_start_y, (bento_real_t)PADDLE_W,
+        (bento_real_t)PADDLE_H, BENTO_GAME_GB_LIGHT);
+
+    bento_game_text_init(&caption);
+    if (status == BENTO_OK) {
+        status = bento_game_box_create(
+            game, &pong->ball, (bento_real_t)mid_x, (bento_real_t)mid_y,
+            (bento_real_t)BALL_SIZE, (bento_real_t)BALL_SIZE,
+            BENTO_GAME_GB_LIGHTEST);
+    }
+    if (status == BENTO_OK) {
+        status = bento_game_text_create(
+            game, &caption, "Move your paddle: UP / DOWN", CAPTION_X,
+            CAPTION_Y, BENTO_GAME_WHITE);
+    }
+    pong->ball_x = (bento_real_t)mid_x;
+    pong->ball_y = (bento_real_t)mid_y;
+    pong->ball_vx = START_VX;
+    pong->ball_vy = START_VY;
+    pong->player_y = (bento_real_t)pong->paddle_start_y;
+    pong->player_speed = (bento_real_t)0.0;
+    return status;
+}
+
+int main(void)
+{
+    pong_t *pong = &g_pong;
+    bool quit = false;
+    bool finished = false;
+    bento_status_t status = BENTO_OK;
+
+    (void)memset(pong, 0, sizeof(*pong));
+    bento_game_init(&pong->game, bento_runtime_get_ui(),
+                    bento_runtime_is_running);
+    bento_game_box_init(&pong->player_paddle);
+    bento_game_box_init(&pong->ball);
+    /* the paddle starts in the middle of game.HEIGHT before start() */
+    pong->paddle_start_y = (pong->game.height / 2) - (PADDLE_H / 2);
+
+    status = bento_game_title(&pong->game, "PONG", NULL, &quit);
+    report_joystick(&pong->game);
+    if ((status == BENTO_OK) && !quit) {
+        status = build_court(pong);
+    }
+    if ((status == BENTO_OK) && !quit) {
+        status = bento_game_run(&pong->game, on_each_frame, NULL, FPS,
+                                &finished);
+    }
+    return (status == BENTO_E_CANCELLED) ? 0 : (int)status;
+}
