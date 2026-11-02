@@ -37,17 +37,29 @@
 #include "bento_gpio.h"
 #include "bento_runtime.h"
 
-/* The field, the paddle and the frame counts (แก้ได้). */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
+/* ความเร็วแนวนอนของลูก (คงที่ ไฟล์นี้ดูเฉพาะ vy) */
+static const bento_real_t BALL_VX = (bento_real_t)8.0;
+/* vy ตอนเสิร์ฟ และเพดานความเร็วแนวตั้ง */
+static const bento_real_t SERVE_VY = (bento_real_t)2.0;
+static const bento_real_t VY_MAX = (bento_real_t)9.0;
 enum {
     PADDLE_SPEED = 9, /* ไม้ขยับกี่พิกเซลต่อเฟรม */
-    FLASH_FRAMES = 4, /* ผนังกะพริบกี่เฟรม (นับเฟรม ไม่ใช้ sleep) */
-    FIELD_TOP = 70,
-    FIELD_BOTTOM = 356,
-    FIELD_RIGHT = 776,
-    BALL_PX = 14,
+    FLASH = 4,        /* ผนังกะพริบกี่เฟรม (นับเฟรม ไม่ใช้ sleep) */
+    /* ขอบสนามด้านใน (ผนังอยู่นอกเส้นเหล่านี้) */
+    TOP = 70,
+    BOTTOM = 356,
+    RIGHT = 776,
+    /* ขนาดภาพ ball / paddle */
+    BALL = 14,
     PADDLE_X = 20,
     PADDLE_W = 14,
-    PADDLE_H = 90,
+    PADDLE_H = 90
+};
+/* ---- end of settings ---- */
+
+/* The field, the paddle and the frame counts. */
+enum {
     PADDLE_FACE_X = PADDLE_X + PADDLE_W, /* the paddle's right edge */
     WALL_THICK_PX = 6,
     RIGHT_WALL_W = 16,
@@ -80,9 +92,6 @@ typedef enum {
     WALL_COUNT,
     WALL_NONE
 } wall_t;
-
-static const bento_real_t BALL_VX = (bento_real_t)8.0;
-static const bento_real_t SERVE_VY = (bento_real_t)2.0;
 
 typedef struct {
     bento_game_t game;
@@ -132,8 +141,7 @@ static bento_real_t absolute(bento_real_t value)
 /* โดนกลางไม้ = 0 · ปลายบน = -1 · ปลายล่าง = +1 */
 static bento_real_t hit_offset(bento_real_t ball_y, int32_t paddle_y)
 {
-    const bento_real_t half_ball =
-        (bento_real_t)BALL_PX / (bento_real_t)2;
+    const bento_real_t half_ball = (bento_real_t)BALL / (bento_real_t)2;
     const bento_real_t half_paddle =
         (bento_real_t)PADDLE_H / (bento_real_t)2;
     const bento_real_t ball_centre = ball_y + half_ball;
@@ -147,10 +155,8 @@ static bento_real_t hit_offset(bento_real_t ball_y, int32_t paddle_y)
 /* การ์ด 2: มุมกระทบ แล้วจำกัดเพดาน (การ์ด 4) */
 static bento_real_t paddle_vy(bento_real_t speed_y, bento_real_t offset)
 {
-    static const bento_real_t vy_max = (bento_real_t)9.0;
-
-    return clamp_real(speed_y + ((bento_real_t)2 * offset), -vy_max,
-                      vy_max);
+    return clamp_real(speed_y + ((bento_real_t)2 * offset), -VY_MAX,
+                      VY_MAX);
 }
 
 /* "%+.<digits>f": MicroPython's digits, with a '+' on a positive. */
@@ -198,7 +204,7 @@ static void report_joystick(const bento_game_t *game)
 static bento_status_t add_walls(bounce_t *bounce)
 {
     bento_game_t *game = &bounce->game;
-    const int32_t wall_top = FIELD_TOP - WALL_THICK_PX;
+    const int32_t wall_top = (int32_t)TOP - WALL_THICK_PX;
     const bento_real_t wall_y = (bento_real_t)wall_top;
     bento_status_t status = bento_game_box_create(
         game, &bounce->walls[WALL_TOP], (bento_real_t)0, wall_y,
@@ -208,15 +214,14 @@ static bento_status_t add_walls(bounce_t *bounce)
     if (status == BENTO_OK) {
         status = bento_game_box_create(
             game, &bounce->walls[WALL_BOTTOM], (bento_real_t)0,
-            (bento_real_t)FIELD_BOTTOM, (bento_real_t)BENTO_GAME_WIDTH,
+            (bento_real_t)BOTTOM, (bento_real_t)BENTO_GAME_WIDTH,
             (bento_real_t)WALL_THICK_PX, COLOR_WALL);
     }
     if (status == BENTO_OK) {
         status = bento_game_box_create(
-            game, &bounce->walls[WALL_RIGHT], (bento_real_t)FIELD_RIGHT,
+            game, &bounce->walls[WALL_RIGHT], (bento_real_t)RIGHT,
             wall_y, (bento_real_t)RIGHT_WALL_W,
-            (bento_real_t)((FIELD_BOTTOM - FIELD_TOP) +
-                           (2 * WALL_THICK_PX)),
+            (bento_real_t)((BOTTOM - TOP) + (2 * WALL_THICK_PX)),
             COLOR_WALL);
     }
     return status;
@@ -246,7 +251,7 @@ static bento_status_t build_screen(bounce_t *bounce)
         status = add_walls(bounce);
     }
     if (status == BENTO_OK) {
-        bounce->paddle_y = (FIELD_TOP + FIELD_BOTTOM - PADDLE_H) / 2;
+        bounce->paddle_y = (TOP + BOTTOM - PADDLE_H) / 2;
         status = bento_game_sprite_create(
             game, &bounce->paddle, "paddle", (bento_real_t)PADDLE_X,
             (bento_real_t)bounce->paddle_y);
@@ -266,7 +271,7 @@ static bento_status_t build_screen(bounce_t *bounce)
     return status;
 }
 
-/* The wall the ball hit flashes white for FLASH_FRAMES frames. */
+/* The wall the ball hit flashes white for FLASH frames. */
 static bento_status_t flash(bounce_t *bounce, wall_t wall)
 {
     bento_status_t status = BENTO_OK;
@@ -277,7 +282,7 @@ static bento_status_t flash(bounce_t *bounce, wall_t wall)
             COLOR_WALL);
     }
     bounce->flash_wall = wall;
-    bounce->flash_left = FLASH_FRAMES;
+    bounce->flash_left = FLASH;
     if (status == BENTO_OK) {
         status = bento_game_box_set_color(
             &bounce->game, &bounce->walls[wall], BENTO_GAME_WHITE);
@@ -292,8 +297,8 @@ static bento_status_t move_paddle(bounce_t *bounce,
 {
     const int32_t step =
         (keys->down ? PADDLE_SPEED : 0) - (keys->up ? PADDLE_SPEED : 0);
-    const int32_t new_y = clamp_int(bounce->paddle_y + step, FIELD_TOP,
-                                    FIELD_BOTTOM - PADDLE_H);
+    const int32_t new_y =
+        clamp_int(bounce->paddle_y + step, TOP, BOTTOM - PADDLE_H);
     bento_status_t status = BENTO_OK;
 
     if (new_y != bounce->paddle_y) {
@@ -334,16 +339,16 @@ static bento_status_t count_flash(bounce_t *bounce)
 /* คิด: สะสมค่า แล้วสะท้อน = ดึงกลับเข้าขอบ + กลับเครื่องหมาย */
 static bento_status_t move_ball(bounce_t *bounce)
 {
-    const int32_t lowest_px = FIELD_BOTTOM - BALL_PX;
-    const int32_t rightmost_px = FIELD_RIGHT - BALL_PX;
+    const int32_t lowest_px = BOTTOM - BALL;
+    const int32_t rightmost_px = RIGHT - BALL;
     const bento_real_t lowest = (bento_real_t)lowest_px;
     const bento_real_t rightmost = (bento_real_t)rightmost_px;
     bento_status_t status = BENTO_OK;
 
     bounce->ball_x += bounce->speed_x;
     bounce->ball_y += bounce->speed_y;
-    if (bounce->ball_y <= (bento_real_t)FIELD_TOP) {
-        bounce->ball_y = (bento_real_t)FIELD_TOP;
+    if (bounce->ball_y <= (bento_real_t)TOP) {
+        bounce->ball_y = (bento_real_t)TOP;
         bounce->speed_y = -bounce->speed_y;
         status = flash(bounce, WALL_TOP);
     } else if (bounce->ball_y >= lowest) {
@@ -369,8 +374,8 @@ static bento_status_t move_ball(bounce_t *bounce)
 static bool ball_hits_paddle(const bounce_t *bounce)
 {
     return bento_game_hit_rect(
-        bounce->ball.x, bounce->ball.y, (bento_real_t)BALL_PX,
-        (bento_real_t)BALL_PX, bounce->paddle.x, bounce->paddle.y,
+        bounce->ball.x, bounce->ball.y, (bento_real_t)BALL,
+        (bento_real_t)BALL, bounce->paddle.x, bounce->paddle.y,
         (bento_real_t)PADDLE_W, (bento_real_t)PADDLE_H);
 }
 
@@ -458,7 +463,7 @@ static bento_status_t catch_or_miss(bounce_t *bounce)
         bounce->speed_y = paddle_vy(bounce->speed_y, offset);
         bounce->hits += 1;
         status = show_hit(bounce, offset);
-    } else if (bounce->ball_x < (bento_real_t)-BALL_PX) {
+    } else if (bounce->ball_x < (bento_real_t)-BALL) {
         serve_again(bounce);
     } else {
         changed = false;
