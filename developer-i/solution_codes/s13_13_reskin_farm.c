@@ -40,26 +40,31 @@
 #pragma GCC optimize("fp-contract=off")
 #endif
 
-/* The round (change these). */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
 enum {
     CROPS = 7,        /* ผลผลิตในแถว */
     PESTS_TOTAL = 15, /* แมลงทั้งรอบ */
-    ON_SCREEN = 3,    /* แมลงบนจอพร้อมกัน (ขนาดชุดหมุนเวียน) */
+    ON_SCREEN = 3,    /* แมลงบนจอพร้อมกันกี่ตัว (ขนาดชุดหมุนเวียน) */
     BOOM_FRAMES = 10, /* ภาพระเบิดค้างกี่เฟรม */
     BITE = 105,       /* แมลงกัดผลหนึ่งผลนานกี่เฟรม (105 / 30 = 3.5 วินาที) */
     SPRAYS = 3,       /* ละอองในชุดหมุนเวียน */
     SPRAY_COOLDOWN = 6, /* พ่นได้ทุก 6 เฟรม */
     SPRAY_SPEED = 7,    /* ละอองตกเฟรมละกี่ px */
     DRONE_SPEED = 6,
+    LANE_Y = 290, /* แนวแมลงคลาน */
+    CROP_Y = 304, /* ผัก */
+    SOIL_Y = 300  /* ดิน */
+};
+/* ---- end of settings ---- */
+
+/* The round. */
+enum {
     KINDS = 3,
     FPS = 30
 };
 
 /* Where things are, in px. */
 enum {
-    LANE_Y = 290, /* แนวแมลงคลาน */
-    CROP_Y = 304,
-    SOIL_Y = 300,
     SOIL_H = 34,
     CROP_X0 = 96,
     CROP_STEP = 100,
