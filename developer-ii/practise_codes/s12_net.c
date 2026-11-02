@@ -17,6 +17,9 @@
  * wifi.connect() and mqtt.connect() block in Python; in C each is a start,
  * then a poll until it answers (the C API never blocks): the blanks say
  * which calls. The 15 s window counts milliseconds, not whole seconds.
+ * In the BENTO Emulator, MQTT from C is not available yet: the program says
+ * so and ends. The note drops ภาษา and บอร์ด from the standard text: as
+ * written it is 143 bytes, above the 126 a text may carry.
  */
 #include <inttypes.h>
 #include <stdbool.h>
@@ -58,6 +61,15 @@ enum {
     LISTEN_PAUSE_MS = 200 /* พักนิดให้ระบบหายใจ */
 };
 
+/* The Emulator note: one label, Thai at 20 px, wrapped inside the screen. */
+enum {
+    NOTE_X = 16,
+    NOTE_Y = 160,
+    NOTE_W = 760,
+    NOTE_PX = 20,
+    NOTE_COLOR = 0xFFFFFF
+};
+
 /* Stop arrives at a sleep, as Python's KeyboardInterrupt does. */
 static bento_status_t pause_ms(uint32_t ms)
 {
@@ -94,7 +106,9 @@ static bento_status_t connect_broker(uint32_t *client, bool *ok)
     /* เติมช่อง (3): ต่อ broker ด้วย bento_mqtt_open_start (host SETTINGS.broker, port
      *   BROKER_PORT = 1883, client_id SETTINGS.player ใน bento_mqtt_config_t) แล้ววน
      *   bento_mqtt_open_poll(*client) จนไม่ใช่ BENTO_E_IN_PROGRESS
-     *   ได้ BENTO_OK เมื่อสำเร็จ ให้เก็บไว้ใน *ok */
+     *   ได้ BENTO_OK เมื่อสำเร็จ ให้เก็บไว้ใน *ok
+     *   ถ้า bento_mqtt_open_start ตอบ BENTO_E_UNSUPPORTED (BENTO Emulator ยังไม่มี
+     *   MQTT จากภาษา C) ให้คืนค่านั้นออกไปเลย use_broker() จะขึ้นข้อความบอกเอง */
     *client = 0U;
     *ok = false;
     return BENTO_OK;
@@ -177,27 +191,64 @@ static bento_status_t share_scores(uint32_t client)
     return status;
 }
 
-int main(void)
+/* The BENTO Emulator's C runtime has no MQTT yet (bento_mqtt answers
+ * BENTO_E_UNSUPPORTED there): say so on screen and on the console. */
+static bento_status_t show_emulator_note(void)
+{
+    static const char note[] = "MQTT จาก C ยังไม่มีใน BENTO Emulator "
+                               "ให้รันบน Dev Kit หรือ Eva Kit";
+    bento_ui_widget_args_t args;
+    bento_ui_id_t label;
+    bento_status_t status;
+
+    bento_ui_widget_args_init(&args);
+    args.text = note;
+    args.text_len = (uint32_t)strlen(note);
+    args.x = NOTE_X;
+    args.y = NOTE_Y;
+    args.w = NOTE_W;
+    args.color = NOTE_COLOR;
+    args.font_px = NOTE_PX;
+    status =
+        bento_ui_label_create(bento_runtime_get_ui(), &args, &label);
+    (void)printf(
+        "%s / MQTT from C is not in the BENTO Emulator yet: run it "
+        "on a Dev Kit or Eva Kit.\n",
+        note);
+    (void)printf("ต่อ broker ไม่ได้\n");
+    return status;
+}
+
+/* The broker part: connect, then share the scores, or say why not. */
+static bento_status_t use_broker(void)
 {
     uint32_t client = 0U;
     bool ok = false;
-    bento_status_t status;
+    bento_status_t status = connect_broker(&client, &ok);
 
-    status = join_wifi(&ok);
+    if (status == BENTO_E_UNSUPPORTED) {
+        status = show_emulator_note();
+    } else if ((status == BENTO_OK) && !ok) {
+        (void)printf("ต่อ broker ไม่ได้\n");
+    } else if (status == BENTO_OK) {
+        (void)printf("ต่อ broker แล้ว\n");
+        status = share_scores(client);
+    } else {
+        /* the status ends the program */
+    }
+    return status;
+}
+
+int main(void)
+{
+    bool ok = false;
+    bento_status_t status = join_wifi(&ok);
 
     if ((status == BENTO_OK) && !ok) {
         (void)printf("ต่อ WiFi ไม่ได้ ลองเช็ค SSID/รหัสอีกที\n");
     } else if (status == BENTO_OK) {
         show_ip();
-        status = connect_broker(&client, &ok);
-        if ((status == BENTO_OK) && !ok) {
-            (void)printf("ต่อ broker ไม่ได้\n");
-        } else if (status == BENTO_OK) {
-            (void)printf("ต่อ broker แล้ว\n");
-            status = share_scores(client);
-        } else {
-            /* the status ends the program */
-        }
+        status = use_broker();
     } else {
         /* the status ends the program */
     }
