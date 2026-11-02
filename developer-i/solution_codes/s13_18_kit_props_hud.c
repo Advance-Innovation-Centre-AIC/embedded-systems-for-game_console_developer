@@ -35,6 +35,14 @@
 #include "bento_random.h"
 #include "bento_runtime.h"
 
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
+enum {
+    FPS = 30
+};
+/* ชื่อช่อง Best ของไฟล์นี้ (เกมเต็มใช้ "shooter" "flappy" "snake" "pong") */
+static const char NAME[] = "kit";
+/* ---- end of settings ---- */
+
 /* a*b+c is two roundings in MicroPython: no fused multiply-add */
 #if defined(__clang__)
 #pragma STDC FP_CONTRACT OFF
@@ -42,9 +50,8 @@
 #pragma GCC optimize("fp-contract=off")
 #endif
 
-/* The kit (change these). */
+/* The kit. */
 enum {
-    FPS = 30,
     PIECES = 5,
     PIECE_BULLETS = 0,
     PIECE_FOOD = 1,
@@ -123,7 +130,6 @@ enum {
     COLOR_PANEL_EDGE = 0x80F4FF
 };
 
-static const char BEST_NAME[] = "kit"; /* this file's Best slot */
 static const char MENU_HEADING[] = "SELECT MODE";
 static const char *const MENU_NAMES[MENU_OPTIONS] = {"EASY", "NORMAL",
                                                      "HARD"};
@@ -426,8 +432,7 @@ static bento_status_t show_over_panel(kit_t *kit, panel_t *panel,
                                       int32_t score)
 {
     /* save first, then show, as game_over does */
-    const int32_t best =
-        bento_game_save_best(&kit->game, &score, BEST_NAME);
+    const int32_t best = bento_game_save_best(&kit->game, &score, NAME);
     char text[TEXT_CHARS];
     bento_status_t status =
         bento_game_text_set(&kit->game, &panel->lines[0], "GAME OVER");
@@ -475,7 +480,7 @@ static bento_status_t make_hud(kit_t *kit, hud_t *hud)
 static bento_status_t update_hud(kit_t *kit, hud_t *hud, int32_t score,
                                  int32_t lives)
 {
-    const int32_t saved_best = bento_game_best(&kit->game, BEST_NAME);
+    const int32_t saved_best = bento_game_best(&kit->game, NAME);
     /* Best follows at once when the score passes it, as in the C game */
     const int32_t best = (saved_best > score) ? saved_best : score;
     bento_status_t status = BENTO_OK;
@@ -619,8 +624,7 @@ play_hud(kit_t *kit, const bento_game_keys_t *keys, bool point)
         if (hud->lives == 0) {
             /* no lives left: save Best, then start again; save_best answers the best score,
              * not a status */
-            (void)bento_game_save_best(&kit->game, &hud->score,
-                                       BEST_NAME);
+            (void)bento_game_save_best(&kit->game, &hud->score, NAME);
             bento_game_sfx(&kit->game, "gameover");
             hud->score = 0;
             hud->lives = LIVES;
