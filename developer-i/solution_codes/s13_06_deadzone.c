@@ -88,7 +88,9 @@ enum {
     VALVE_Y = 214,
     FLIPS_Y = 258,
     HELP_Y = 300,
-    TEXT_CHARS = 64
+    TEXT_CHARS =
+        128,        /* a label's 126 bytes; Thai is 3 bytes a letter */
+    SIGN_CHARS = 12 /* a sign, ten digits and the NUL */
 };
 
 enum {
@@ -262,7 +264,7 @@ static bento_status_t add_lamps(deadzone_t *deadzone)
 {
     bento_game_t *game = &deadzone->game;
     char label[TEXT_CHARS];
-    char sign[TEXT_CHARS];
+    char sign[SIGN_CHARS];
     int32_t i;
     bento_status_t status = BENTO_OK;
 
@@ -472,7 +474,7 @@ static bento_status_t show_paddle(deadzone_t *deadzone)
 static bento_status_t show_error(deadzone_t *deadzone,
                                  bento_real_t error)
 {
-    char sign[TEXT_CHARS];
+    char sign[SIGN_CHARS];
     char text[TEXT_CHARS];
     bento_status_t status = BENTO_OK;
 
@@ -492,7 +494,7 @@ static bento_status_t show_out(deadzone_t *deadzone, int32_t out)
     static const uint32_t lamp_on[LAMP_COUNT] = {
         BENTO_GAME_GREEN, BENTO_GAME_CYAN, BENTO_GAME_ORANGE};
     bento_game_t *game = &deadzone->game;
-    char sign[TEXT_CHARS];
+    char sign[SIGN_CHARS];
     char text[TEXT_CHARS];
     bento_status_t status = BENTO_OK;
 

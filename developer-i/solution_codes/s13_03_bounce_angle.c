@@ -57,7 +57,8 @@ enum {
     MARK_H = 14,
     MARK_PARK_X = -20,
     FPS = 30,
-    TEXT_CHARS = 96
+    /* three numbers of up to BENTO_FMT_BUF_SIZE bytes and the words */
+    TEXT_CHARS = 144
 };
 
 /* The texts on top. */
