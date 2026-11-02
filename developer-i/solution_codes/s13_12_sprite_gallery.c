@@ -40,13 +40,18 @@
 #include "bento_gpio.h"
 #include "bento_runtime.h"
 
-/* The gallery (แก้ได้). */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
+enum {
+    ANIM_EVERY = 8, /* สลับเฟรมทุก 8 เฟรม (30 fps = ราว 4 ครั้งต่อวินาที) */
+    SLOT_Y = 160
+};
+/* ---- end of settings ---- */
+
+/* The gallery. */
 enum {
     SPRITE_COUNT = 20,
     SLOTS = 5,
     CENTRE_SLOT = 2, /* ช่องกลาง = ช่องที่ 2 */
-    ANIM_EVERY = 8,  /* สลับเฟรมทุก 8 เฟรม (ราว 4 ครั้งต่อวินาที) */
-    SLOT_Y = 160,
     HEAD_COUNT = 4,
     FPS = 30,
     TEXT_CHARS = 96
