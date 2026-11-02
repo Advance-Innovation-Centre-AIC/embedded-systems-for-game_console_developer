@@ -19,8 +19,7 @@
  * - the imports of wifi, mqtt and time set nothing up, so C includes nothing for them;
  * - the rest is never reached and is not written as code, as each part below says.
  * Never reached while blank (1) keeps ok false, and how C would do it:
- * - the settings SSID, PASSWORD, BROKER "test.mosquitto.org", TOPIC
- *   "tesaiot/class/leaderboard" and PLAYER "board-01" (static const texts here);
+ * - the settings at the top are read by the blanks only: main() marks them used;
  * - blank (2) prints the IP (bento_wifi_ip, bento_wifi_ipv4_format);
  * - blank (3) connects to the broker on port 1883 (bento_mqtt_open_start, _open_poll),
  *   or prints that it could not and ends;
@@ -33,6 +32,19 @@
 #include <stdio.h>
 
 #include "bento_runtime.h"
+
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
+/* แก้ 4 บรรทัดนี้ให้ตรงกับของจริงก่อนรัน */
+static const char SSID[] =
+    "YOUR_WIFI_SSID"; /* ชื่อ WiFi (2.4GHz) ของห้องเรา */
+static const char PASSWORD[] = "YOUR_WIFI_PASSWORD"; /* รหัส WiFi */
+/* MQTT broker สาธารณะ (ทดสอบได้เลย) */
+static const char BROKER[] = "test.mosquitto.org";
+/* ห้องเดียวกันทั้งคาบ ทุกคนใช้ topic นี้ */
+static const char TOPIC[] = "tesaiot/class/leaderboard";
+/* ชื่อผู้เล่น/บอร์ดของเรา (แต่ละคนตั้งไม่ซ้ำ) */
+static const char PLAYER[] = "board-01";
+/* ---- end of settings ---- */
 
 /* ต่อ WiFi: answers true when connected (blank (1) still empty: false). */
 static bool connect_wifi(void)
@@ -50,6 +62,11 @@ int main(void)
 {
     const bool connected = connect_wifi();
 
+    (void)SSID;     /* ช่อง (1) ใช้ค่านี้ */
+    (void)PASSWORD; /* ช่อง (1) ใช้ค่านี้ */
+    (void)BROKER;   /* ช่อง (3) ใช้ค่านี้ */
+    (void)PLAYER;   /* ช่อง (3) ใช้ค่านี้ */
+    (void)TOPIC;    /* ช่อง (4) ใช้ค่านี้ */
     if (!connected) {
         (void)printf("ต่อ WiFi ไม่ได้ ลองเช็ค SSID/รหัสอีกที\n");
     }
