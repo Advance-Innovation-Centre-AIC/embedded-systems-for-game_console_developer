@@ -42,7 +42,35 @@
 #pragma GCC optimize("fp-contract=off")
 #endif
 
-/* The controller (change these; the real-valued ones are at the top of update()). */
+/* ---- แก้ก่อนรัน: settings (MISRA deviation CT02) ---- */
+/* วาล์วเปิดสุด เติมน้ำได้กี่ % ต่อเฟรม */
+static const bento_real_t IN_MAX = (bento_real_t)0.6;
+/* น้ำออกตอนเริ่ม (% ต่อเฟรม) */
+static const bento_real_t OUT_START = (bento_real_t)0.20;
+/* ดึงน้ำออกได้สูงสุด — มากกว่า IN_MAX จึงทำให้น้ำลดได้แม้วาล์วเปิดสุด */
+static const bento_real_t OUT_MAX = (bento_real_t)0.80;
+/* กดจอยค้าง 1 เฟรม น้ำออกเปลี่ยนเท่านี้ */
+static const bento_real_t OUT_STEP = (bento_real_t)0.01;
+/* วาล์วมอเตอร์ขยับได้เฟรมละ 2% (มอเตอร์จริงหมุนช้า ไม่ได้เปิดทันที) */
+static const bento_real_t VALVE_RATE = (bento_real_t)0.02;
+enum {
+    BAND = 3,          /* ช่องว่าง: ห่างเป้าไม่เกิน 3% = วาล์วหยุดนิ่ง */
+    TARGET_START = 60, /* เป้าหมายระดับน้ำ (%) */
+    LOW_ALARM = 20,    /* ต่ำกว่านี้ = เตือน LOW WATER */
+    ALARM_EVERY = 20,  /* เตือนดังทุก 20 เฟรม (ไม่ใช้ sleep ในวงวน) */
+    TANK_X = 160,
+    TANK_Y = 52,
+    TANK_W = 196,
+    TANK_H = 294,
+    SEG_H = 28, /* น้ำหนึ่งขั้น 10% สูง 28 px (10 ขั้น = 280 px = 100%) */
+    BOTTOM = TANK_Y + TANK_H - 8, /* ก้นถังด้านใน (y) */
+    PIPE_Y = 72,                  /* ท่อน้ำเข้า (บนซ้าย) */
+    OUT_Y = 324,                  /* ท่อน้ำออก (ล่างขวา) */
+    CARD_X = 548,                 /* คอลัมน์การ์ดค่าด้านขวา */
+    CARD_W = 232
+};
+/* ---- end of settings ---- */
+
 /* The value cards, in the order they are made. */
 enum {
     CARD_LEVEL = 0,
@@ -52,15 +80,11 @@ enum {
 };
 
 enum {
-    BAND = 3,          /* ช่องว่าง: ห่างเป้าไม่เกิน 3% = วาล์วหยุดนิ่ง */
-    TARGET_START = 60, /* เป้าหมายระดับน้ำ (%) */
     TARGET_STEP = 5,
     TARGET_LOW = 10,
     TARGET_HIGH = 90,
     TARGET_MARGIN =
-        2,          /* B keeps the target 2 % above the alarm's band */
-    LOW_ALARM = 20, /* ต่ำกว่านี้ = เตือน LOW WATER */
-    ALARM_EVERY = 20, /* เตือนดังทุก 20 เฟรม (ไม่ใช้ sleep ในวงวน) */
+        2, /* B keeps the target 2 % above the alarm's band */
     FULL = 100,
     STEP_PERCENT = 10, /* one water segment = 10 % */
     PERCENT_DIGITS = 100,
@@ -74,16 +98,6 @@ enum {
 
 /* Where things are, in px. */
 enum {
-    TANK_X = 160,
-    TANK_Y = 52,
-    TANK_W = 196,
-    TANK_H = 294,
-    SEG_H = 28, /* น้ำหนึ่งขั้น 10% สูง 28 px (10 ขั้น = 280 px = 100%) */
-    BOTTOM = TANK_Y + TANK_H - 8,
-    PIPE_Y = 72,
-    OUT_Y = 324,
-    CARD_X = 548,
-    CARD_W = 232,
     CARD_Y0 = 52,
     CARD_STEP = 76,
     CARD_H = 66,
@@ -129,7 +143,8 @@ enum {
     LINE_OVERHANG = 6,
     LINE_H = 3,
     TAG_GAP = 14,
-    TARGET_TAG_X = TANK_X + TANK_W + TAG_GAP, /* right of the tank */
+    TARGET_TAG_X = (int32_t)TANK_X + (int32_t)TANK_W +
+                   TAG_GAP, /* right of the tank */
     TAG_RAISE = 11,
     FLOW_SPEED_MAX =
         5, /* the inflow dots run 1 .. 6 px a frame with the valve */
@@ -433,9 +448,9 @@ static bento_status_t add_inflow(tank_hmi_t *tank)
     bento_game_t *game = &tank->game;
     bento_game_box_t pipe;
     const rect_t pipe_place = {PIPE_IN_X, PIPE_Y,
-                               TANK_X - PIPE_IN_SHORT, PIPE_H};
+                               (int32_t)TANK_X - PIPE_IN_SHORT, PIPE_H};
     const box_style_t pipe_style = {COLOR_PIPE, COLOR_EDGE, 1, 0};
-    const rect_t valve_place = {VALVE_X, PIPE_Y - VALVE_RAISE,
+    const rect_t valve_place = {VALVE_X, (int32_t)PIPE_Y - VALVE_RAISE,
                                 VALVE_SIZE, VALVE_SIZE};
     const box_style_t valve_style = {COLOR_GRAY,
                                      (int32_t)BENTO_GAME_WHITE,
@@ -446,7 +461,8 @@ static bento_status_t add_inflow(tank_hmi_t *tank)
 
     for (i = 0; (status == BENTO_OK) && (i < SLIDERS); i++) {
         const rect_t place = {FLOW_X0 + (i * FLOW_STEP),
-                              PIPE_Y + DOT_INSET, FLOW_W, DOT_H};
+                              (int32_t)PIPE_Y + DOT_INSET, FLOW_W,
+                              DOT_H};
         const box_style_t style = {COLOR_LIGHT, BENTO_GAME_BORDER_NONE,
                                    1, 0};
 
@@ -457,8 +473,9 @@ static bento_status_t add_inflow(tank_hmi_t *tank)
                          valve_style);
     }
     if (status == BENTO_OK) {
-        status = add_text(game, &tank->valve_tag, "HOLD", VALVE_TAG_X,
-                          PIPE_Y + VALVE_TAG_Y, BENTO_GAME_WHITE);
+        status =
+            add_text(game, &tank->valve_tag, "HOLD", VALVE_TAG_X,
+                     (int32_t)PIPE_Y + VALVE_TAG_Y, BENTO_GAME_WHITE);
     }
     return status;
 }
@@ -467,17 +484,19 @@ static bento_status_t add_outflow(tank_hmi_t *tank)
 {
     bento_game_t *game = &tank->game;
     bento_game_box_t pipe;
-    const rect_t pipe_place = {(TANK_X + TANK_W) - PIPE_OUT_TUCK, OUT_Y,
-                               PIPE_OUT_W, PIPE_H};
+    const rect_t pipe_place = {((int32_t)TANK_X + (int32_t)TANK_W) -
+                                   PIPE_OUT_TUCK,
+                               OUT_Y, PIPE_OUT_W, PIPE_H};
     const box_style_t pipe_style = {COLOR_PIPE, COLOR_EDGE, 1, 0};
     bento_status_t status =
         add_box(game, &pipe, pipe_place, pipe_style);
     int32_t i;
 
     for (i = 0; (status == BENTO_OK) && (i < SLIDERS); i++) {
-        const rect_t place = {TANK_X + TANK_W + DROP_GAP +
-                                  (i * DROP_STEP),
-                              OUT_Y + DOT_INSET, DROP_W, DOT_H};
+        const rect_t place = {(int32_t)TANK_X + (int32_t)TANK_W +
+                                  DROP_GAP + (i * DROP_STEP),
+                              (int32_t)OUT_Y + DOT_INSET, DROP_W,
+                              DOT_H};
         const box_style_t style = {COLOR_LIGHT, BENTO_GAME_BORDER_NONE,
                                    1, 0};
 
@@ -493,14 +512,14 @@ static bento_status_t add_tank(tank_hmi_t *tank)
     const rect_t tank_place = {TANK_X, TANK_Y, TANK_W, TANK_H};
     const box_style_t tank_style = {COLOR_TANK, COLOR_TANK_RIM,
                                     TANK_RADIUS, TANK_EDGE};
-    const rect_t water_place = {TANK_X + WATER_INSET, BOTTOM,
+    const rect_t water_place = {(int32_t)TANK_X + WATER_INSET, BOTTOM,
                                 TANK_W - (2 * WATER_INSET), SEG_H};
     const box_style_t deep_style = {COLOR_DEEP, BENTO_GAME_BORDER_NONE,
                                     1, 0};
     const box_style_t light_style = {COLOR_LIGHT,
                                      BENTO_GAME_BORDER_NONE, 1, 0};
     /* the base hides any surface below the tank's floor */
-    const rect_t base_place = {TANK_X - BASE_OVERHANG, BOTTOM,
+    const rect_t base_place = {(int32_t)TANK_X - BASE_OVERHANG, BOTTOM,
                                TANK_W + (2 * BASE_OVERHANG), SEG_H + 2};
     const box_style_t base_style = {COLOR_BASE, COLOR_EDGE, BASE_RADIUS,
                                     0};
@@ -527,7 +546,7 @@ static bento_status_t add_target(tank_hmi_t *tank)
 {
     bento_game_t *game = &tank->game;
     const int32_t line_y = level_to_y((bento_real_t)TARGET_START);
-    const rect_t place = {TANK_X - LINE_OVERHANG, line_y,
+    const rect_t place = {(int32_t)TANK_X - LINE_OVERHANG, line_y,
                           TANK_W + (2 * LINE_OVERHANG), LINE_H};
     const box_style_t style = {BENTO_GAME_YELLOW,
                                BENTO_GAME_BORDER_NONE, 1, 0};
@@ -538,8 +557,8 @@ static bento_status_t add_target(tank_hmi_t *tank)
     (void)snprintf(text, sizeof(text), "เป้า %d%%", TARGET_START);
     if (status == BENTO_OK) {
         status = add_text(game, &tank->target_tag, text,
-                          TANK_X + TANK_W + TAG_GAP, line_y - TAG_RAISE,
-                          BENTO_GAME_YELLOW);
+                          (int32_t)TANK_X + (int32_t)TANK_W + TAG_GAP,
+                          line_y - TAG_RAISE, BENTO_GAME_YELLOW);
     }
     return status;
 }
@@ -570,10 +589,10 @@ static bento_status_t add_cards(tank_hmi_t *tank)
         status = add_box(&tank->game, &panel, place, style);
         tank->cards[row].shown[0] = '\0';
         if (status == BENTO_OK) {
-            status =
-                add_text(&tank->game, &tank->cards[row].text,
-                         card_list[row].title, CARD_X + CARD_TEXT_X,
-                         y + CARD_TEXT_Y, BENTO_GAME_WHITE);
+            status = add_text(&tank->game, &tank->cards[row].text,
+                              card_list[row].title,
+                              (int32_t)CARD_X + CARD_TEXT_X,
+                              y + CARD_TEXT_Y, BENTO_GAME_WHITE);
         }
     }
     return status;
@@ -582,8 +601,6 @@ static bento_status_t add_cards(tank_hmi_t *tank)
 static bento_status_t build_screen(tank_hmi_t *tank)
 {
     const bento_real_t level_start = (bento_real_t)50.0;
-    const bento_real_t out_start =
-        (bento_real_t)0.20; /* น้ำออกตอนเริ่ม (% ต่อเฟรม) */
     bento_status_t status = add_status_bar(tank);
 
     if (status == BENTO_OK) {
@@ -603,7 +620,7 @@ static bento_status_t build_screen(tank_hmi_t *tank)
     }
     tank->level = level_start;
     tank->target = TARGET_START;
-    tank->outflow = out_start;
+    tank->outflow = OUT_START;
     tank->valve = (bento_real_t)0.0;
     tank->shown_bars = 0;
     tank->shown_open = true;
@@ -747,12 +764,12 @@ static bento_status_t show_pipes(tank_hmi_t *tank)
             tank->valve * (bento_real_t)FLOW_SPEED_MAX;
 
         status = slide(game, tank->flow_in, (bento_real_t)1 + wide,
-                       FLOW_X0, TANK_X - FLOW_END_GAP);
+                       FLOW_X0, (int32_t)TANK_X - FLOW_END_GAP);
     }
     if (status == BENTO_OK) {
         status = slide(game, tank->drops, drop_step,
-                       TANK_X + TANK_W + DROP_GAP,
-                       TANK_X + TANK_W + DROP_RUN);
+                       (int32_t)TANK_X + (int32_t)TANK_W + DROP_GAP,
+                       (int32_t)TANK_X + (int32_t)TANK_W + DROP_RUN);
     }
     return status;
 }
@@ -867,27 +884,23 @@ static bento_status_t show_alarm(tank_hmi_t *tank)
 /* Read the keys: right and left change the outflow, A and B move the target. */
 static void read_keys(tank_hmi_t *tank, const bento_game_keys_t *keys)
 {
-    /* ดึงน้ำออกได้สูงสุด มากกว่าที่วาล์วเติมได้ น้ำจึงลดได้แม้วาล์วเปิดสุด */
-    const bento_real_t out_max = (bento_real_t)0.80;
-    const bento_real_t out_step =
-        (bento_real_t)0.01; /* กดจอยค้าง 1 เฟรม น้ำออกเปลี่ยนเท่านี้ */
-
     if (keys->right) {
         tank->outflow =
-            clamp(tank->outflow + out_step, (bento_real_t)0, out_max);
+            clamp(tank->outflow + OUT_STEP, (bento_real_t)0, OUT_MAX);
     }
     if (keys->left) {
         tank->outflow =
-            clamp(tank->outflow - out_step, (bento_real_t)0, out_max);
+            clamp(tank->outflow - OUT_STEP, (bento_real_t)0, OUT_MAX);
     }
     if (bento_game_pressed_once(&tank->game, BENTO_GAME_KEY_A, keys)) {
         tank->target = clamp_whole(tank->target + TARGET_STEP,
                                    TARGET_LOW, TARGET_HIGH);
     }
     if (bento_game_pressed_once(&tank->game, BENTO_GAME_KEY_B, keys)) {
-        tank->target =
-            clamp_whole(tank->target - TARGET_STEP,
-                        LOW_ALARM + BAND + TARGET_MARGIN, TARGET_HIGH);
+        tank->target = clamp_whole(tank->target - TARGET_STEP,
+                                   (int32_t)LOW_ALARM + (int32_t)BAND +
+                                       TARGET_MARGIN,
+                                   TARGET_HIGH);
     }
 }
 
@@ -896,10 +909,6 @@ static bento_status_t update(void *user, bool *out_stop)
 {
     /* the state is the file-scope g_tank: no void * conversion (MISRA 11.5) */
     tank_hmi_t *tank = &g_tank;
-    const bento_real_t in_max =
-        (bento_real_t)0.6; /* วาล์วเปิดสุด เติมน้ำได้กี่ % ต่อเฟรม */
-    const bento_real_t valve_rate =
-        (bento_real_t)0.02; /* วาล์วมอเตอร์ขยับได้เฟรมละ 2% */
     bento_game_keys_t keys;
     bento_real_t opening;
     bento_status_t status;
@@ -913,11 +922,11 @@ static bento_status_t update(void *user, bool *out_stop)
     (void)bento_game_keys(&tank->game, &keys);
     read_keys(tank, &keys);
     move = valve_step(tank->level, tank->target, BAND);
-    opening = (bento_real_t)move * valve_rate;
+    opening = (bento_real_t)move * VALVE_RATE;
     tank->valve =
         clamp(tank->valve + opening, (bento_real_t)0, (bento_real_t)1);
     tank->level =
-        next_level(tank->level, tank->valve * in_max, tank->outflow);
+        next_level(tank->level, tank->valve * IN_MAX, tank->outflow);
     status = show_water(tank);
     if (status == BENTO_OK) {
         status = show_target(tank);
